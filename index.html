@@ -330,8 +330,8 @@ function tasksFor(d){
   const rot=p.mealRotation[d]||{lunch:"",dinner:""};
   const t=p.dailyTasks.map(x=>({...x,lbl:x.lbl.replace("{LUNCH}",rot.lunch).replace("{DINNER}",rot.dinner)}));
   if((p.workoutDays||[]).includes(d)){
-    const firstRuleIdx=t.findIndex(x=>x.k==="rule");
-    const insertAt=firstRuleIdx>=0?firstRuleIdx:t.length;
+    const allDayIdx=t.findIndex(x=>String(x.tm).toLowerCase()==="all day");
+    const insertAt=allDayIdx>=0?allDayIdx:t.length;
     t.splice(insertAt,0,{id:"workout",tm:"evening",lbl:"Bodyweight circuit — 3 rounds",k:"move"});
   }
   return t;
