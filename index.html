@@ -134,12 +134,37 @@ button{font-family:inherit}
 footer{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);font-size:11px;color:var(--faint)}
 #install{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));max-width:488px;margin:0 auto;display:none;padding:13px 16px;background:var(--ink);color:var(--sage);border-radius:12px;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 10px 30px rgba(0,0,0,.3);z-index:50}
 #install p{margin:0;font-size:13px} #install button{padding:10px 16px;background:var(--haldi);color:var(--ink);border:none;border-radius:9px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;cursor:pointer}
+
+.iconBtn{background:var(--card);border:1px solid var(--line);width:34px;height:34px;border-radius:10px;display:grid;place-items:center;cursor:pointer;color:var(--ink);font-size:15px;flex:0 0 auto}
+.planRow{display:flex;gap:14px;padding:11px 0;border-top:1px solid var(--line);font-size:14px}
+.planRow time{font-family:var(--display);font-size:12.5px;font-weight:700;color:var(--haldi);flex:0 0 56px}
+
+.modalOverlay{position:fixed;inset:0;background:rgba(20,28,24,.55);display:flex;align-items:flex-end;justify-content:center;z-index:100}
+.modalOverlay[hidden]{display:none}
+.modal{background:var(--paper);width:100%;max-width:520px;max-height:92svh;overflow-y:auto;border-radius:18px 18px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom))}
+.modalHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.modalHead h2{font-family:var(--display);font-size:19px;font-weight:800;margin:0}
+.modalClose{background:transparent;border:none;font-size:24px;color:var(--faint);cursor:pointer;line-height:1;padding:4px}
+.modalActions{display:flex;gap:10px;margin-top:20px}
+.modalActions button{flex:1;padding:13px;border-radius:10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;cursor:pointer;border:1px solid var(--line2);background:transparent;color:var(--faint)}
+.btnPrimary{background:var(--ink)!important;color:var(--sage)!important;border-color:var(--ink)!important}
+
+.wizSection{margin-bottom:16px}
+.wizLabel{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:600;margin-bottom:8px}
+.wizInput{width:100%;padding:12px 13px;font:14.5px var(--body);background:var(--card);border:1px solid var(--line2);border-radius:10px;color:var(--ink)}
+.wizHint{font-size:12px;margin-top:10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{padding:8px 13px;font-size:12.5px;font-weight:500;background:var(--card);border:1px solid var(--line2);border-radius:20px;cursor:pointer;color:var(--ink)}
+.chips button[aria-pressed=true]{background:var(--ink);color:var(--sage);border-color:var(--ink)}
+.spin{width:26px;height:26px;border:3px solid var(--line2);border-top-color:var(--ink);border-radius:50%;animation:spin .8s linear infinite;margin:34px auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="bar"><div class="mark">Four<b>teen</b></div><div class="daypill" id="dayPill">Day 1 of 14</div></div>
+  <div class="bar"><div class="mark">Four<b>teen</b></div><div style="display:flex;align-items:center;gap:8px"><button class="iconBtn" id="wizOpenBtn" aria-label="AI plan setup" title="AI plan setup">⚙</button><div class="daypill" id="dayPill">Day 1 of 14</div></div></div>
 
   <div class="hero">
     <div class="heroTop">
@@ -156,7 +181,7 @@ footer{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);font-si
   </div>
 
   <div class="dialWrap">
-    <div class="dialLbl"><span>14-day block</span><b id="streakTxt">0-day streak</b></div>
+    <div class="dialLbl"><span id="blockLbl">14-day block</span><b id="streakTxt">0-day streak</b></div>
     <div id="dial"></div>
   </div>
 
@@ -174,9 +199,13 @@ footer{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);font-si
       <input id="addLbl" type="text" placeholder="New item — e.g. Take multivitamin">
       <button id="addBtn" aria-label="Add item">+</button>
     </div>
-    <div class="cig">
+    <div class="cig" id="cigBlock">
       <div><div class="lab">Cigarettes today</div><div class="hint" id="cigHint">At or under target.</div></div>
       <div class="stp"><button data-cig="-1" aria-label="one fewer">−</button><span id="cigN">0</span><button data-cig="1" aria-label="one more">+</button></div>
+    </div>
+    <div class="cig" id="drinkBlock" hidden>
+      <div><div class="lab">Drinks today</div><div class="hint" id="drinkHint">—</div></div>
+      <div class="stp"><button data-drink="-1" aria-label="one fewer">−</button><span id="drinkN">0</span><button data-drink="1" aria-label="one more">+</button></div>
     </div>
   </section>
 
@@ -194,53 +223,117 @@ footer{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);font-si
 
   <section id="panelWorkout" hidden>
     <div id="woBadge" class="badge off"></div>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:2px"><button class="editToggle" id="woEditToggle">Edit</button></div>
     <div id="woList"></div>
+    <div id="woAddRow" class="addRow" hidden>
+      <input id="woAddName" type="text" placeholder="Exercise name" style="flex:1.4">
+      <input id="woAddReps" type="text" placeholder="Reps" style="flex:1">
+      <button id="woAddBtn" aria-label="Add exercise">+</button>
+    </div>
     <p class="note">Warm-up 3 min: arm circles, leg swings, 20 jumping jacks, 10 squats. Add 2 reps per exercise each week. When push-ups hit 15 easily, slow the lowering to 3 seconds instead of adding reps.</p>
   </section>
 
   <section id="panelPlan" hidden>
-    <div class="beat"><time>10:30</time><div><b>Whey, scoop one</b><span>In water, before leaving for office.</span></div></div>
-    <div class="beat"><time>12:00</time><div><b>Green tea</b><span>No sugar.</span></div></div>
-    <div class="beat"><time>14:30</time><div><b>Lunch</b><span>3 roti, the day's sabji, 150g raw paneer, salad.</span></div></div>
-    <div class="beat"><time>19:30</time><div><b>Whey, scoop two</b><span>Straight after office.</span></div></div>
-    <div class="beat"><time>21:00</time><div><b>Dinner</b><span>Dal or dal-chawal, 100g raw paneer.</span></div></div>
-    <div class="beat"><time>21:45</time><div><b>Walk</b><span>Twenty minutes. Thirty more in the morning.</span></div></div>
-    <div class="sumHead">The arithmetic</div>
-    <div class="sum">
-      <div class="sumrow"><em>Maintenance</em><b>2,500</b></div>
-      <div class="sumrow"><em>Eaten</em><b>1,740</b></div>
-      <div class="sumrow"><em>Walked off</em><b>250</b></div>
-      <div class="sumrow total"><em>Daily deficit</em><b>1,010</b></div>
-    </div>
-    <div class="warnbox"><b>Where this fails</b>Cooking oil. Three teaspoons a day is the entire margin. Six instead of three is 200 calories, and the 14-day number quietly becomes 1.5 kg instead of 2.5.</div>
+    <div id="planContent"></div>
   </section>
 
   <footer id="footNote"></footer>
 </div>
 <div id="install"><p>Add Fourteen to your home screen so it opens like an app.</p><button id="installBtn">Install</button></div>
 
+<div class="modalOverlay" id="wizOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="wizTitle">
+    <div class="modalHead"><h2 id="wizTitle">AI plan setup</h2><button class="modalClose" id="wizCloseBtn" aria-label="Close">&times;</button></div>
+
+    <div id="wizForm">
+      <div class="wizSection"><label class="wizLabel">Current weight (kg)</label><input class="wizInput" id="wCurrent" type="number" step="0.1" inputmode="decimal" placeholder="e.g. 85"></div>
+      <div class="wizSection"><label class="wizLabel">Goal weight (kg)</label><input class="wizInput" id="wGoalIn2" type="number" step="0.1" inputmode="decimal" placeholder="e.g. 78"></div>
+      <div class="wizSection"><label class="wizLabel">Days to reach it</label><input class="wizInput" id="wDays" type="number" step="1" inputmode="numeric" placeholder="e.g. 14"></div>
+      <div class="wizSection"><label class="wizLabel">Diet</label>
+        <div class="chips" data-group="diet">
+          <button type="button" data-val="vegetarian">Veg</button>
+          <button type="button" data-val="eggetarian">Eggetarian</button>
+          <button type="button" data-val="non-vegetarian">Non-veg</button>
+        </div>
+      </div>
+      <div class="wizSection"><label class="wizLabel">Goal type</label>
+        <div class="chips" data-group="goalType">
+          <button type="button" data-val="fat loss">Fat loss</button>
+          <button type="button" data-val="muscle gain">Muscle gain</button>
+          <button type="button" data-val="recomp (fat loss + muscle)">Recomp</button>
+          <button type="button" data-val="general fitness">General fitness</button>
+        </div>
+      </div>
+      <div class="wizSection"><label class="wizLabel">Activity level</label>
+        <div class="chips" data-group="activity">
+          <button type="button" data-val="sedentary">Sedentary</button>
+          <button type="button" data-val="light">Light</button>
+          <button type="button" data-val="moderate">Moderate</button>
+          <button type="button" data-val="active">Active</button>
+        </div>
+      </div>
+      <div class="wizSection"><label class="wizLabel">Smoking</label>
+        <div class="chips" data-group="smokeOn"><button type="button" data-val="no">Doesn't apply</button><button type="button" data-val="yes">Cuts down from</button></div>
+        <input class="wizInput" id="wSmokeN" type="number" step="1" inputmode="numeric" placeholder="cigarettes / day" style="margin-top:8px" hidden>
+      </div>
+      <div class="wizSection"><label class="wizLabel">Drinking</label>
+        <div class="chips" data-group="drinkOn"><button type="button" data-val="no">Doesn't apply</button><button type="button" data-val="yes">Cuts down from</button></div>
+        <input class="wizInput" id="wDrinkN" type="number" step="1" inputmode="numeric" placeholder="drinks / week" style="margin-top:8px" hidden>
+      </div>
+      <div class="wizSection"><label class="wizLabel">Dislikes / allergies (optional)</label><input class="wizInput" id="wDislikes" type="text" placeholder="e.g. no mushrooms, lactose intolerant"></div>
+      <div id="wizFormErr" class="wizHint" style="color:var(--clay)" hidden></div>
+      <div class="modalActions"><button class="btnPrimary" id="wizGenBtn" type="button">Generate plan</button></div>
+    </div>
+
+    <div id="wizLoading" hidden>
+      <div class="spin"></div>
+      <p class="note" style="text-align:center">Gemini is building your plan…</p>
+    </div>
+
+    <div id="wizError" hidden class="warnbox"><b>Couldn't generate plan</b><span id="wizErrorMsg"></span></div>
+
+    <div id="wizPreview" hidden></div>
+  </div>
+</div>
+
 <script>
-const SABJI=["Rajma or chole","Bhindi masala","Lauki chana dal","Baingan bharta","Mix veg (gajar, beans, matar)","Palak","Aloo shimla mirch — small"];
-const DINNER=["Chana dal 2 bowls + 100g raw paneer","Moong dal 2 bowls + 100g raw paneer","Dal 1 bowl + rice 1 bowl + 100g raw paneer","Masoor dal 2 bowls + 100g raw paneer","Dal 1 bowl + rice 1 bowl + 100g raw paneer","Toor dal 2 bowls + 100g raw paneer","Dal 1 bowl + rice 1 bowl + 100g raw paneer"];
 const DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-const WO=[1,3,5];
-const CIRCUIT=[["Push-ups","8–12"],["Bodyweight squats","15"],["Reverse lunges","10 each leg"],["Plank","30 sec"],["Glute bridge","15"],["Superman hold","20 sec"]];
+
+function defaultPlan(){
+  const sabji=["Rajma or chole","Bhindi masala","Lauki chana dal","Baingan bharta","Mix veg (gajar, beans, matar)","Palak","Aloo shimla mirch — small"];
+  const dinner=["Chana dal 2 bowls + 100g raw paneer","Moong dal 2 bowls + 100g raw paneer","Dal 1 bowl + rice 1 bowl + 100g raw paneer","Masoor dal 2 bowls + 100g raw paneer","Dal 1 bowl + rice 1 bowl + 100g raw paneer","Toor dal 2 bowls + 100g raw paneer","Dal 1 bowl + rice 1 bowl + 100g raw paneer"];
+  return {
+    summary:"Cooking oil is the entire margin here — three teaspoons a day. Six instead of three is 200 calories, and the block's number quietly gets worse. Walking more and the Mon/Wed/Fri circuit are the levers, not cutting food further — that would cost you protein and muscle.",
+    maintenanceCalories:2500, targetCalories:1740, targetProteinGrams:131,
+    workoutDays:[1,3,5],
+    circuit:[{name:"Push-ups",reps:"8–12"},{name:"Bodyweight squats",reps:"15"},{name:"Reverse lunges",reps:"10 each leg"},{name:"Plank",reps:"30 sec"},{name:"Glute bridge",reps:"15"},{name:"Superman hold",reps:"20 sec"}],
+    mealRotation:sabji.map((l,i)=>({lunch:l,dinner:dinner[i]})),
+    dailyTasks:[
+      {id:"whey1",tm:"10:30",lbl:"Whey — 1 scoop in water",k:"food"},
+      {id:"tea",tm:"12:00",lbl:"Green tea",k:"food"},
+      {id:"walkAM",tm:"morning",lbl:"Morning walk, 30 min",k:"move"},
+      {id:"lunch",tm:"14:30",lbl:"3 roti + {LUNCH} + 150g raw paneer + salad",k:"food"},
+      {id:"whey2",tm:"19:30",lbl:"Whey — 1 scoop in water",k:"food"},
+      {id:"dinner",tm:"21:00",lbl:"{DINNER}",k:"food"},
+      {id:"walkPM",tm:"21:45",lbl:"Post-dinner walk, 20 min",k:"move"},
+      {id:"cucumber",tm:"22:30",lbl:"Half cucumber",k:"food"},
+      {id:"oil",tm:"all day",lbl:"Oil stayed under 3 tsp",k:"rule"},
+      {id:"water",tm:"all day",lbl:"3+ litres water",k:"rule"}
+    ],
+    habits:{smoking:{enabled:true,targetPerDay:5},drinking:{enabled:false,targetPerWeek:0}}
+  };
+}
 
 function tasksFor(d){
-  const t=[
-    {id:"whey1",tm:"10:30",lbl:"Whey — 1 scoop in water",k:"food"},
-    {id:"tea",tm:"12:00",lbl:"Green tea",k:"food"},
-    {id:"walkAM",tm:"morning",lbl:"Morning walk, 30 min",k:"move"},
-    {id:"lunch",tm:"14:30",lbl:"3 roti + "+SABJI[d]+" + 150g raw paneer + salad",k:"food"},
-    {id:"whey2",tm:"19:30",lbl:"Whey — 1 scoop in water",k:"food"},
-    {id:"dinner",tm:"21:00",lbl:DINNER[d],k:"food"},
-    {id:"walkPM",tm:"21:45",lbl:"Post-dinner walk, 20 min",k:"move"},
-    {id:"cucumber",tm:"22:30",lbl:"Half cucumber",k:"food"},
-    {id:"oil",tm:"all day",lbl:"Oil stayed under 3 tsp",k:"rule"},
-    {id:"water",tm:"all day",lbl:"3+ litres water",k:"rule"}
-  ];
-  if(WO.includes(d)) t.splice(7,0,{id:"workout",tm:"evening",lbl:"Bodyweight circuit — 3 rounds",k:"move"});
+  const p=S.plan;
+  const rot=p.mealRotation[d]||{lunch:"",dinner:""};
+  const t=p.dailyTasks.map(x=>({...x,lbl:x.lbl.replace("{LUNCH}",rot.lunch).replace("{DINNER}",rot.dinner)}));
+  if((p.workoutDays||[]).includes(d)){
+    const firstRuleIdx=t.findIndex(x=>x.k==="rule");
+    const insertAt=firstRuleIdx>=0?firstRuleIdx:t.length;
+    t.splice(insertAt,0,{id:"workout",tm:"evening",lbl:"Bodyweight circuit — 3 rounds",k:"move"});
+  }
   return t;
 }
 
@@ -253,8 +346,10 @@ if(!S) S={start:today(),startWeight:85,goal:78,days:{},weights:[]};
 if(!S.overrides) S.overrides={};      // {id: renamed label}
 if(!S.removedIds) S.removedIds=[];    // ids hidden from tracking
 if(!S.customItems) S.customItems=[];  // [{id,tm,lbl,k}] user-added
+if(!S.plan) S.plan=defaultPlan();
+if(!S.blockDays) S.blockDays=14;
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
-let editMode=false;
+let editMode=false,planEditMode=false,woEditMode=false;
 
 function effectiveTasks(d){
   const base=tasksFor(d).filter(t=>!S.removedIds.includes(t.id));
@@ -264,7 +359,8 @@ function effectiveTasks(d){
 
 const D=today();
 const dow=new Date(D+"T00:00:00").getDay();
-if(!S.days[D]) S.days[D]={checked:[],cigs:0};
+if(!S.days[D]) S.days[D]={checked:[],cigs:0,drinks:0};
+if(S.days[D].drinks===undefined) S.days[D].drinks=0;
 const rec=()=>S.days[D];
 const $=id=>document.getElementById(id);
 const dayNum=Math.max(1,Math.round((new Date(D)-new Date(S.start))/864e5)+1);
@@ -299,12 +395,13 @@ function renderHero(){
   }
   $("pRate").textContent=rateTxt==="—"?"—":rateTxt+" kg";
   $("pDate").textContent=dateTxt;
-  $("dayPill").textContent="Day "+Math.min(dayNum,14)+" of 14";
+  $("dayPill").textContent="Day "+Math.min(dayNum,S.blockDays)+" of "+S.blockDays;
+  $("blockLbl").textContent=S.blockDays+"-day block";
 }
 
 function renderDial(){
   const s=new Date(S.start+"T00:00:00");
-  $("dial").innerHTML=Array.from({length:14},(_,i)=>{
+  $("dial").innerHTML=Array.from({length:S.blockDays},(_,i)=>{
     const d=new Date(s);d.setDate(d.getDate()+i);const k=iso(d);
     const r=S.days[k],tot=effectiveTasks(d.getDay()).length;
     const ratio=r?r.checked.length/tot:0;
@@ -344,9 +441,30 @@ function renderToday(){
 
   const doneN=set.size,tot=list.length,pct=tot?Math.round(doneN/tot*100):0;
   $("pnNum").textContent=pct+"%"; $("pnBar").style.width=pct+"%"; $("pnCount").textContent=doneN+" of "+tot+" done";
-  $("cigN").textContent=rec().cigs;
-  $("cigHint").textContent=rec().cigs<=5?"At or under target.":(rec().cigs-5)+" over your 5/day target.";
+  renderHabits();
   renderDial();renderStreak();
+}
+
+function renderHabits(){
+  const hs=S.plan.habits;
+  $("cigBlock").hidden=!hs.smoking.enabled;
+  if(hs.smoking.enabled){
+    $("cigN").textContent=rec().cigs;
+    if(editMode){
+      $("cigHint").innerHTML=`Target: <input type="number" id="cigTarget" value="${hs.smoking.targetPerDay}" style="width:44px;border:1px solid var(--line2);border-radius:6px;padding:2px 4px;font:inherit">/day`;
+    }else{
+      $("cigHint").textContent=rec().cigs<=hs.smoking.targetPerDay?"At or under target.":(rec().cigs-hs.smoking.targetPerDay)+" over your "+hs.smoking.targetPerDay+"/day target.";
+    }
+  }
+  $("drinkBlock").hidden=!hs.drinking.enabled;
+  if(hs.drinking.enabled){
+    $("drinkN").textContent=rec().drinks;
+    if(editMode){
+      $("drinkHint").innerHTML=`Target: <input type="number" id="drinkTarget" value="${hs.drinking.targetPerWeek}" style="width:44px;border:1px solid var(--line2);border-radius:6px;padding:2px 4px;font:inherit">/week`;
+    }else{
+      $("drinkHint").textContent=rec().drinks<=hs.drinking.targetPerWeek?"At or under weekly target.":(rec().drinks-hs.drinking.targetPerWeek)+" over your "+hs.drinking.targetPerWeek+"/week target.";
+    }
+  }
 }
 
 $("editToggle").onclick=()=>{
@@ -367,7 +485,9 @@ $("panelToday").addEventListener("click",e=>{
     save();renderToday();return;
   }
   const c=e.target.closest("[data-cig]");
-  if(c){rec().cigs=Math.max(0,rec().cigs+ +c.dataset.cig);save();renderToday()}
+  if(c){rec().cigs=Math.max(0,rec().cigs+ +c.dataset.cig);save();renderToday();return}
+  const dr=e.target.closest("[data-drink]");
+  if(dr){rec().drinks=Math.max(0,rec().drinks+ +dr.dataset.drink);save();renderToday()}
 });
 
 $("panelToday").addEventListener("change",e=>{
@@ -376,6 +496,15 @@ $("panelToday").addEventListener("change",e=>{
     const val=inp.value.trim();
     if(val) S.overrides[inp.dataset.edit]=val;
     save();
+    return;
+  }
+  if(e.target.id==="cigTarget"){
+    const v=parseInt(e.target.value,10);
+    if(v>=0){S.plan.habits.smoking.targetPerDay=v;save()}
+  }
+  if(e.target.id==="drinkTarget"){
+    const v=parseInt(e.target.value,10);
+    if(v>=0){S.plan.habits.drinking.targetPerWeek=v;save()}
   }
 });
 
@@ -428,12 +557,84 @@ $("goalBtn").onclick=()=>{
 $("goalIn").addEventListener("keydown",e=>{if(e.key==="Enter")$("goalBtn").click()});
 
 function renderWorkout(){
-  const on=WO.includes(dow);
-  let next="—";for(let i=1;i<=7;i++){if(WO.includes((dow+i)%7)){next=DAYS[(dow+i)%7];break}}
+  const wo=S.plan.workoutDays,circ=S.plan.circuit;
+  const on=wo.includes(dow);
+  let next="—";for(let i=1;i<=7;i++){if(wo.includes((dow+i)%7)){next=DAYS[(dow+i)%7];break}}
   const b=$("woBadge");b.className="badge "+(on?"on":"off");
   b.textContent=on?"Training day — 3 rounds, 60 sec rest between":"Rest day. Next circuit: "+next+". Walks still count.";
-  $("woList").innerHTML=CIRCUIT.map(([n,r],i)=>`<div class="ex"><u>${String(i+1).padStart(2,"0")}</u><b>${n}</b><span>${r}</span></div>`).join("");
+  $("woEditToggle").textContent=woEditMode?"Done":"Edit";
+  $("woEditToggle").classList.toggle("on",woEditMode);
+  if(woEditMode){
+    $("woList").innerHTML=circ.map((c,i)=>`
+      <div class="taskEdit" data-idx="${i}">
+        <input type="text" value="${c.name.replace(/"/g,'&quot;')}" data-woedit="name:${i}" style="flex:1.4;border:none;background:transparent;font:14.5px var(--body);color:var(--ink)">
+        <input type="text" value="${c.reps.replace(/"/g,'&quot;')}" data-woedit="reps:${i}" style="flex:1;border:none;background:transparent;font:14.5px var(--body);color:var(--ink)">
+        <button class="rm" data-worm="${i}" aria-label="Remove">−</button>
+      </div>`).join("");
+    $("woAddRow").hidden=false;
+  }else{
+    $("woList").innerHTML=circ.map((c,i)=>`<div class="ex"><u>${String(i+1).padStart(2,"0")}</u><b>${c.name}</b><span>${c.reps}</span></div>`).join("");
+    $("woAddRow").hidden=true;
+  }
 }
+
+$("woEditToggle").onclick=()=>{woEditMode=!woEditMode;renderWorkout()};
+$("panelWorkout").addEventListener("change",e=>{
+  const inp=e.target.closest("[data-woedit]");
+  if(inp){const [field,idx]=inp.dataset.woedit.split(":");S.plan.circuit[+idx][field]=inp.value.trim();save()}
+});
+$("panelWorkout").addEventListener("click",e=>{
+  const rm=e.target.closest("[data-worm]");
+  if(rm){S.plan.circuit.splice(+rm.dataset.worm,1);save();renderWorkout()}
+});
+$("woAddBtn").onclick=()=>{
+  const name=$("woAddName").value.trim(),reps=$("woAddReps").value.trim();
+  if(!name||!reps)return;
+  S.plan.circuit.push({name,reps});save();$("woAddName").value="";$("woAddReps").value="";renderWorkout();
+};
+
+function renderPlan(){
+  const p=S.plan;
+  const rows=tasksFor(1).filter(t=>t.id!=="workout").map(t=>`<div class="planRow"><time>${t.tm}</time><div>${t.lbl}</div></div>`).join("");
+  const deficit=p.maintenanceCalories-p.targetCalories;
+  $("planContent").innerHTML=`
+    ${rows}
+    <div class="sumHead">The arithmetic</div>
+    <div class="sum">
+      <div class="sumrow"><em>Maintenance</em><b>${p.maintenanceCalories}</b></div>
+      <div class="sumrow"><em>Target intake</em><b>${p.targetCalories}</b></div>
+      <div class="sumrow total"><em>Daily deficit</em><b>${deficit}</b></div>
+      <div class="sumrow"><em>Protein target</em><b>${p.targetProteinGrams}g</b></div>
+    </div>
+    <div class="warnbox"><b>Notes</b>${p.summary}</div>
+    <div class="progressLine" style="margin-top:22px"><span style="flex:1;font-family:var(--display);font-weight:700;font-size:19px">Meal rotation</span><button class="editToggle" id="planEditToggle">${planEditMode?"Done":"Edit"}</button></div>
+    <div id="rotList"></div>
+  `;
+  renderRotationRows();
+  $("planEditToggle").onclick=()=>{planEditMode=!planEditMode;renderPlan()};
+}
+function renderRotationRows(){
+  const p=S.plan;
+  $("rotList").innerHTML=p.mealRotation.map((m,i)=>planEditMode?`
+      <div class="taskEdit">
+        <span class="tmSmall">${DAYS[i]}</span>
+        <input type="text" value="${m.lunch.replace(/"/g,'&quot;')}" data-rot="lunch:${i}" placeholder="Lunch">
+      </div>
+      <div class="taskEdit" style="margin-top:-3px">
+        <span class="tmSmall"></span>
+        <input type="text" value="${m.dinner.replace(/"/g,'&quot;')}" data-rot="dinner:${i}" placeholder="Dinner">
+      </div>`
+    :`<div class="beat"><time>${DAYS[i]}</time><div><b>${m.lunch}</b><span>${m.dinner}</span></div></div>`
+  ).join("");
+}
+$("panelPlan").addEventListener("change",e=>{
+  const inp=e.target.closest("[data-rot]");
+  if(inp){
+    const [field,idx]=inp.dataset.rot.split(":");
+    S.plan.mealRotation[+idx][field]=inp.value.trim();
+    save();
+  }
+});
 
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected",x===b));
@@ -445,7 +646,102 @@ document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
 });
 
 $("footNote").textContent="Started "+S.start+" · target "+S.goal+" kg · data stays on this device";
-renderHero();renderToday();renderWeight();renderWorkout();renderGoal();
+renderHero();renderToday();renderWeight();renderWorkout();renderGoal();renderPlan();
+
+// ---- AI plan wizard ----
+const wiz={diet:null,goalType:null,activity:null,smokeOn:null,drinkOn:null,lastPlan:null};
+
+function openWizard(){
+  $("wizOverlay").hidden=false;
+  $("wizForm").hidden=false;$("wizLoading").hidden=true;$("wizError").hidden=true;$("wizPreview").hidden=true;
+  $("wCurrent").value=currentWeight();
+  $("wGoalIn2").value=S.goal;
+  $("wDays").value=S.blockDays;
+}
+function closeWizard(){$("wizOverlay").hidden=true}
+$("wizOpenBtn").onclick=openWizard;
+$("wizCloseBtn").onclick=closeWizard;
+$("wizOverlay").addEventListener("click",e=>{if(e.target.id==="wizOverlay")closeWizard()});
+
+document.querySelectorAll(".chips[data-group]").forEach(grp=>{
+  grp.addEventListener("click",e=>{
+    const b=e.target.closest("button[data-val]");
+    if(!b)return;
+    grp.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false"));
+    wiz[grp.dataset.group]=b.dataset.val;
+    if(grp.dataset.group==="smokeOn") $("wSmokeN").hidden=(b.dataset.val!=="yes");
+    if(grp.dataset.group==="drinkOn") $("wDrinkN").hidden=(b.dataset.val!=="yes");
+  });
+});
+
+$("wizGenBtn").onclick=async()=>{
+  const cur=parseFloat($("wCurrent").value),goal=parseFloat($("wGoalIn2").value),days=parseInt($("wDays").value,10);
+  const errs=[];
+  if(!cur||cur<30||cur>250) errs.push("current weight");
+  if(!goal||goal<30||goal>250) errs.push("goal weight");
+  if(!days||days<3||days>90) errs.push("days (3–90)");
+  if(!wiz.diet) errs.push("diet");
+  if(!wiz.goalType) errs.push("goal type");
+  if(!wiz.activity) errs.push("activity level");
+  if(errs.length){$("wizFormErr").hidden=false;$("wizFormErr").textContent="Fill in: "+errs.join(", ");return}
+  $("wizFormErr").hidden=true;
+
+  const payload={
+    currentWeight:cur,goalWeight:goal,days,
+    dietPref:wiz.diet,goalType:wiz.goalType,activityLevel:wiz.activity,
+    smokingEnabled:wiz.smokeOn==="yes",smokingCurrent:parseInt($("wSmokeN").value,10)||0,
+    drinkingEnabled:wiz.drinkOn==="yes",drinkingCurrent:parseInt($("wDrinkN").value,10)||0,
+    dislikes:$("wDislikes").value.trim()
+  };
+
+  $("wizForm").hidden=true;$("wizLoading").hidden=false;$("wizError").hidden=true;
+  try{
+    const res=await fetch("/api/generate-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.error||"Request failed");
+    wiz.lastPlan={...data.plan,days:payload.days,goalWeight:payload.goalWeight,currentWeight:payload.currentWeight};
+    renderPlanPreview(wiz.lastPlan);
+    $("wizLoading").hidden=true;$("wizPreview").hidden=false;
+  }catch(err){
+    $("wizLoading").hidden=true;$("wizForm").hidden=false;
+    $("wizError").hidden=false;$("wizErrorMsg").textContent=String(err.message||err);
+  }
+};
+
+function renderPlanPreview(p){
+  $("wizPreview").innerHTML=`
+    <p class="note" style="margin-top:0">${p.summary}</p>
+    <div class="sum">
+      <div class="sumrow"><em>Maintenance</em><b>${p.maintenanceCalories}</b></div>
+      <div class="sumrow"><em>Target intake</em><b>${p.targetCalories}</b></div>
+      <div class="sumrow total"><em>Daily deficit</em><b>${p.maintenanceCalories-p.targetCalories}</b></div>
+      <div class="sumrow"><em>Protein target</em><b>${p.targetProteinGrams}g</b></div>
+    </div>
+    <div class="sumHead" style="margin-top:18px">Meal rotation</div>
+    ${p.mealRotation.map((m,i)=>`<div class="beat"><time>${DAYS[i]}</time><div><b>${m.lunch}</b><span>${m.dinner}</span></div></div>`).join("")}
+    <div class="sumHead" style="margin-top:18px">Workout</div>
+    <p class="note" style="margin-top:0">${p.workoutDays.map(d=>DAYS[d]).join(", ")} — ${p.circuit.length} exercises</p>
+    <div class="modalActions">
+      <button id="wizRegenBtn" type="button">Regenerate</button>
+      <button class="btnPrimary" id="wizUseBtn" type="button">Use this plan</button>
+    </div>
+  `;
+  $("wizRegenBtn").onclick=()=>{$("wizPreview").hidden=true;$("wizForm").hidden=false};
+  $("wizUseBtn").onclick=()=>applyPlan(wiz.lastPlan);
+}
+
+function applyPlan(p){
+  S.plan={
+    summary:p.summary,maintenanceCalories:p.maintenanceCalories,targetCalories:p.targetCalories,
+    targetProteinGrams:p.targetProteinGrams,workoutDays:p.workoutDays,circuit:p.circuit,
+    mealRotation:p.mealRotation,dailyTasks:p.dailyTasks,habits:p.habits
+  };
+  S.startWeight=p.currentWeight;S.goal=p.goalWeight;S.blockDays=p.days;
+  S.start=today();S.days={};S.weights=[{d:today(),w:p.currentWeight}];
+  S.overrides={};S.removedIds=[];S.customItems=[];
+  save();
+  location.reload();
+}
 
 let deferred;
 addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;$("install").style.display="flex"});
