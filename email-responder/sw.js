@@ -1,6 +1,6 @@
 // Scoped to /email-responder/ so it never displaces the Fourteen service worker at the root.
-const CACHE = "email-responder-v1";
-const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
+const CACHE = "snapply-v1";
+const ASSETS = ["./", "./index.html", "./draft-request.js", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));

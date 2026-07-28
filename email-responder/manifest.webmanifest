@@ -1,7 +1,7 @@
 {
-  "name": "Email Responder — job application drafts",
-  "short_name": "Responder",
-  "description": "Turn a job posting into a tailored application email with your resume attached.",
+  "name": "Snapply — screenshot a job, send the application",
+  "short_name": "Snapply",
+  "description": "Screenshot a job posting and get a tailored application email with your resume attached.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
