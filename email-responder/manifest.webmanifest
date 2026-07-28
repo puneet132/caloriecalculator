@@ -1,0 +1,15 @@
+{
+  "name": "Email Responder — job application drafts",
+  "short_name": "Responder",
+  "description": "Turn a job posting into a tailored application email with your resume attached.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#141C18",
+  "theme_color": "#141C18",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
