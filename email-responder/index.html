@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Snapply — screenshot a job, send the application</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#141C18">
+<style>
+  :root{
+    --bg:#141C18; --panel:#1C2621; --line:#2E3B34; --ink:#E8EFE9;
+    --dim:#93A69B; --accent:#7BD8A0; --warn:#F0B67F; --bad:#E88B7D;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    padding:20px 16px 64px; max-width:760px; margin-inline:auto;
+    -webkit-text-size-adjust:100%;
+  }
+  h1{font-size:1.5rem; margin:0 0 2px; letter-spacing:-.02em}
+  .sub{color:var(--dim); font-size:.9rem; margin:0}
+  .brand{display:flex; align-items:center; gap:14px; margin:0 0 24px}
+  .mark{width:52px; height:52px; flex:0 0 52px; border-radius:13px}
+  a{color:var(--accent)}
+  section{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px; margin-bottom:14px}
+  h2{font-size:.78rem; text-transform:uppercase; letter-spacing:.09em; color:var(--dim); margin:0 0 12px; font-weight:600}
+  label{display:block; font-size:.85rem; color:var(--dim); margin:12px 0 5px}
+  label:first-of-type{margin-top:0}
+  input[type=email],input[type=text],input[type=password],textarea{
+    width:100%; background:#121A16; color:var(--ink); border:1px solid var(--line);
+    border-radius:9px; padding:10px 12px; font:inherit; font-size:.95rem;
+  }
+  textarea{resize:vertical; min-height:88px}
+  input:focus,textarea:focus{outline:none; border-color:var(--accent)}
+  .file{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    border:1px dashed var(--line); border-radius:10px; padding:12px; background:#121A16;
+  }
+  .file input[type=file]{font-size:.82rem; color:var(--dim); max-width:100%}
+  button{
+    background:var(--accent); color:#0C130F; border:0; border-radius:10px;
+    padding:12px 18px; font:inherit; font-weight:650; cursor:pointer;
+  }
+  button:disabled{opacity:.45; cursor:default}
+  button.ghost{background:transparent; color:var(--ink); border:1px solid var(--line); font-weight:500}
+  .row{display:flex; gap:8px; flex-wrap:wrap}
+  .pill{
+    display:inline-block; font-size:.75rem; padding:3px 9px; border-radius:99px;
+    background:#22302A; color:var(--dim); border:1px solid var(--line);
+  }
+  .pill.ok{color:var(--accent); border-color:#2F5943}
+  .note{font-size:.85rem; color:var(--dim); margin:10px 0 0}
+  .flag{border-left:3px solid var(--warn); padding:10px 12px; background:#241E17; border-radius:0 9px 9px 0; margin-top:10px; font-size:.88rem}
+  .flag.bad{border-color:var(--bad); background:#261B19}
+  .flag h3{margin:0 0 6px; font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:var(--warn)}
+  .flag.bad h3{color:var(--bad)}
+  .flag ul{margin:0; padding-left:18px}
+  .flag li{margin:3px 0}
+  #status{font-size:.88rem; color:var(--dim); min-height:1.4em; margin-top:10px}
+  #status.err{color:var(--bad)}
+  #out{display:none}
+  .preview{max-height:130px; border-radius:8px; border:1px solid var(--line)}
+  code{background:#121A16; padding:1px 5px; border-radius:4px; font-size:.85em}
+</style>
+</head>
+<body>
+
+<header class="brand">
+  <svg class="mark" viewBox="0 0 512 512" aria-hidden="true">
+    <rect width="512" height="512" rx="116" fill="#1C2621"/>
+    <g fill="none" stroke="#7BD8A0" stroke-width="26" stroke-linecap="round">
+      <path d="M120 176 V136 A16 16 0 0 1 136 120 H176"/>
+      <path d="M336 120 H376 A16 16 0 0 1 392 136 V176"/>
+      <path d="M392 336 V376 A16 16 0 0 1 376 392 H336"/>
+      <path d="M176 392 H136 A16 16 0 0 1 120 376 V336"/>
+    </g>
+    <path d="M351 199 L195 266 L248 285 L282 333 Z" fill="#7BD8A0"/>
+    <path d="M248 285 L351 199 L266 313 Z" fill="#4FAF7B"/>
+  </svg>
+  <div>
+    <h1>Snapply</h1>
+    <p class="sub">Screenshot a job. Send the application. Your resume and key stay on this device.</p>
+  </div>
+</header>
+
+<section>
+  <h2>1 · You</h2>
+  <label for="sender">Send from</label>
+  <input id="sender" type="email" placeholder="you@example.com" autocomplete="email">
+
+  <label for="apiKey">Anthropic API key <span id="keyState" class="pill">not set</span></label>
+  <div class="row">
+    <input id="apiKey" type="password" placeholder="sk-ant-..." autocomplete="off" spellcheck="false" style="flex:1;min-width:200px">
+    <button class="ghost" id="clearKey" type="button">Clear</button>
+  </div>
+  <p class="note">
+    Stored only in this browser and sent straight to Anthropic — it never passes through
+    this site's server. Drafts run on your account, so you pay for your own usage.
+    Get one at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>.
+  </p>
+
+  <label>Master resume <span id="resumeState" class="pill">none saved</span></label>
+  <div class="file">
+    <input id="resumeFile" type="file" accept=".pdf,.docx">
+    <button class="ghost" id="clearResume" type="button">Clear</button>
+  </div>
+  <p class="note">PDF or .docx. Saved in this browser and reused for every application — you only do this once.</p>
+</section>
+
+<section>
+  <h2>2 · The job</h2>
+  <label>Screenshot of the posting</label>
+  <div class="file">
+    <input id="shotFile" type="file" accept="image/*">
+    <span id="shotState" class="pill">none</span>
+  </div>
+  <p class="note">Or paste an image straight onto this page with <code>Ctrl/Cmd+V</code>.</p>
+  <img id="shotPreview" class="preview" alt="" style="display:none">
+
+  <label for="jobText">…and / or paste the text</label>
+  <textarea id="jobText" placeholder="Paste the job description, recruiter email, or the whole LinkedIn post."></textarea>
+</section>
+
+<section>
+  <button id="go" type="button">Draft the email</button>
+  <div id="status"></div>
+</section>
+
+<section id="out">
+  <h2>3 · Review before sending</h2>
+  <div id="flags"></div>
+
+  <label for="toField">To</label>
+  <input id="toField" type="email">
+
+  <label for="subjField">Subject</label>
+  <input id="subjField" type="text">
+
+  <label for="bodyField">Body — edit freely</label>
+  <textarea id="bodyField" rows="14"></textarea>
+
+  <div class="row" style="margin-top:14px">
+    <button id="dlEml" type="button">Download .eml (resume attached)</button>
+    <button class="ghost" id="copyBody" type="button">Copy body</button>
+    <button class="ghost" id="openMail" type="button">Open mail app</button>
+  </div>
+  <p class="note">The <code>.eml</code> carries the resume as a real attachment — open it in your mail client, or drag it into Gmail, and send.</p>
+</section>
+
+<script src="./draft-request.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const LS = { sender: "er.sender", resume: "er.resume", key: "er.key" };
+
+let resume = null;   // {name, type, base64, text}
+let shot = null;     // {type, base64, dataUrl}
+
+/* ---------- persistence ---------- */
+$("sender").value = localStorage.getItem(LS.sender) || "";
+$("sender").addEventListener("change", () => localStorage.setItem(LS.sender, $("sender").value.trim()));
+
+$("apiKey").value = localStorage.getItem(LS.key) || "";
+paintKey();
+$("apiKey").addEventListener("change", () => {
+  const v = $("apiKey").value.trim();
+  if (v) localStorage.setItem(LS.key, v); else localStorage.removeItem(LS.key);
+  paintKey();
+});
+$("clearKey").addEventListener("click", () => {
+  $("apiKey").value = "";
+  localStorage.removeItem(LS.key);
+  paintKey();
+  setStatus("API key cleared from this browser.");
+});
+
+function paintKey() {
+  const el = $("keyState");
+  const has = !!($("apiKey").value.trim());
+  el.textContent = has ? "saved on this device" : "not set";
+  el.classList.toggle("ok", has);
+}
+
+try {
+  const saved = localStorage.getItem(LS.resume);
+  if (saved) { resume = JSON.parse(saved); paintResume(); }
+} catch { localStorage.removeItem(LS.resume); }
+
+function paintResume() {
+  const el = $("resumeState");
+  if (resume) { el.textContent = resume.name; el.classList.add("ok"); }
+  else { el.textContent = "none saved"; el.classList.remove("ok"); }
+}
+
+/* ---------- helpers ---------- */
+const bytesToBase64 = (bytes) => {
+  let s = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(s);
+};
+const utf8ToBase64 = (str) => bytesToBase64(new TextEncoder().encode(str));
+
+function setStatus(msg, isErr) {
+  $("status").textContent = msg;
+  $("status").className = isErr ? "err" : "";
+}
+
+/* ---------- .docx text extraction (zero dependencies) ----------
+   A .docx is a ZIP. Locate word/document.xml via the central directory,
+   inflate it with the browser's DecompressionStream, then pull the text runs. */
+async function docxToText(buf) {
+  const dv = new DataView(buf);
+  const u8 = new Uint8Array(buf);
+
+  // End of Central Directory: scan backwards for 0x06054b50.
+  let eocd = -1;
+  for (let i = u8.length - 22; i >= 0 && i > u8.length - 65558; i--) {
+    if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  }
+  if (eocd < 0) throw new Error("Not a valid .docx file.");
+
+  const count = dv.getUint16(eocd + 10, true);
+  let p = dv.getUint32(eocd + 16, true);
+
+  let target = null;
+  for (let i = 0; i < count; i++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    const method  = dv.getUint16(p + 10, true);
+    const csize   = dv.getUint32(p + 20, true);   // exact compressed length
+    const nameLen = dv.getUint16(p + 28, true);
+    const extraLen= dv.getUint16(p + 30, true);
+    const cmtLen  = dv.getUint16(p + 32, true);
+    const lho     = dv.getUint32(p + 42, true);
+    const name    = new TextDecoder().decode(u8.subarray(p + 46, p + 46 + nameLen));
+    if (name === "word/document.xml") { target = { method, lho, csize }; break; }
+    p += 46 + nameLen + extraLen + cmtLen;
+  }
+  if (!target) throw new Error("No document.xml inside the .docx.");
+
+  // Local file header — the authoritative name/extra lengths for the data offset.
+  if (dv.getUint32(target.lho, true) !== 0x04034b50) throw new Error("Corrupt .docx entry.");
+  const lNameLen  = dv.getUint16(target.lho + 26, true);
+  const lExtraLen = dv.getUint16(target.lho + 28, true);
+  const start = target.lho + 30 + lNameLen + lExtraLen;
+
+  // Slice to exactly the compressed length. Chromium's DecompressionStream errors on
+  // trailing bytes, and everything after this entry is the rest of the zip.
+  const end = start + target.csize;
+
+  let xmlBytes;
+  if (target.method === 0) {
+    xmlBytes = u8.subarray(start, end);
+  } else if (target.method === 8) {
+    if (typeof DecompressionStream === "undefined") {
+      throw new Error("This browser can't read .docx — export the resume as PDF instead.");
+    }
+    const stream = new Blob([u8.subarray(start, end)]).stream()
+      .pipeThrough(new DecompressionStream("deflate-raw"));
+    xmlBytes = new Uint8Array(await new Response(stream).arrayBuffer());
+  } else {
+    throw new Error("Unsupported compression in .docx.");
+  }
+
+  const xml = new TextDecoder().decode(xmlBytes);
+  return xml
+    .replace(/<w:p[ >]/g, "\n<w:p ")                 // paragraph → newline
+    .replace(/<w:tab\b[^>]*\/?>/g, "\t")
+    .replace(/<w:br\b[^>]*\/?>/g, "\n")
+    .replace(/<(?!\/?w:t[ >\/])[^>]+>/g, "")         // drop every tag except w:t
+    .replace(/<\/?w:t[^>]*>/g, "")
+    .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/* ---------- resume input ---------- */
+$("resumeFile").addEventListener("change", async (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  setStatus("Reading resume…");
+  try {
+    const buf = await f.arrayBuffer();
+    if (buf.byteLength > 4_000_000) throw new Error("Resume is over 4MB — please shrink it.");
+
+    if (f.name.toLowerCase().endsWith(".docx")) {
+      const text = await docxToText(buf);
+      if (!text) throw new Error("Couldn't read any text out of that .docx.");
+      resume = { name: f.name, type: "docx", base64: bytesToBase64(new Uint8Array(buf)), text };
+    } else if (f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf")) {
+      resume = { name: f.name, type: "pdf", base64: bytesToBase64(new Uint8Array(buf)), text: "" };
+    } else {
+      throw new Error("Use a .pdf or .docx resume.");
+    }
+
+    try {
+      localStorage.setItem(LS.resume, JSON.stringify(resume));
+    } catch {
+      setStatus("Resume loaded, but too large to save for next time.", true);
+    }
+    paintResume();
+    if (!$("status").classList.contains("err")) setStatus("Resume saved.");
+  } catch (err) {
+    resume = null; paintResume();
+    setStatus(err.message, true);
+  }
+});
+
+$("clearResume").addEventListener("click", () => {
+  resume = null;
+  localStorage.removeItem(LS.resume);
+  $("resumeFile").value = "";
+  paintResume();
+  setStatus("Resume cleared.");
+});
+
+/* ---------- screenshot input ---------- */
+async function loadShot(file) {
+  if (!file || !file.type.startsWith("image/")) return;
+  setStatus("Reading screenshot…");
+  const buf = await file.arrayBuffer();
+
+  // Send the original untouched when it's already small and within Claude's
+  // 2576px high-res limit — re-encoding a text screenshot costs legibility.
+  const bmp = await createImageBitmap(new Blob([buf], { type: file.type }));
+  const long = Math.max(bmp.width, bmp.height);
+  const okType = ["image/png", "image/jpeg", "image/gif", "image/webp"].includes(file.type);
+
+  if (okType && long <= 2576 && buf.byteLength <= 1_400_000) {
+    shot = { type: file.type, base64: bytesToBase64(new Uint8Array(buf)) };
+  } else {
+    const scale = Math.min(1, 2000 / long);
+    const c = document.createElement("canvas");
+    c.width = Math.round(bmp.width * scale);
+    c.height = Math.round(bmp.height * scale);
+    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+    const dataUrl = c.toDataURL("image/jpeg", 0.92);
+    shot = { type: "image/jpeg", base64: dataUrl.split(",")[1] };
+  }
+  bmp.close();
+
+  $("shotPreview").src = "data:" + shot.type + ";base64," + shot.base64;
+  $("shotPreview").style.display = "block";
+  $("shotState").textContent = "ready";
+  $("shotState").classList.add("ok");
+  setStatus("");
+}
+
+$("shotFile").addEventListener("change", (e) => loadShot(e.target.files[0]).catch((x) => setStatus(x.message, true)));
+
+window.addEventListener("paste", (e) => {
+  const item = [...(e.clipboardData?.items || [])].find((i) => i.type.startsWith("image/"));
+  if (item) loadShot(item.getAsFile()).catch((x) => setStatus(x.message, true));
+});
+
+/* ---------- drafting ----------
+   With your own key the browser talks to Anthropic directly, so the key never
+   reaches this site's server and the usage bills to your account. Without one we
+   try the deployment's own proxy, which most deployments leave disabled — it
+   answers 402 and we ask for a key instead. */
+async function draft(payload) {
+  const key = $("apiKey").value.trim();
+
+  if (key) {
+    const res = await fetch(DraftRequest.API_URL, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": key,
+        "anthropic-version": DraftRequest.ANTHROPIC_VERSION,
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify(DraftRequest.buildRequestBody(payload))
+    });
+
+    if (!res.ok) {
+      let detail = "";
+      try { detail = (await res.json())?.error?.message || ""; } catch {}
+      if (res.status === 401) throw new Error("Anthropic rejected that API key. Check it and try again.");
+      if (res.status === 429) throw new Error("Rate limited by Anthropic. Wait a moment and retry.");
+      if (res.status === 400 && /credit balance/i.test(detail)) {
+        throw new Error("Your Anthropic account is out of credit. Top up at console.anthropic.com.");
+      }
+      throw new Error(detail || `Anthropic request failed (${res.status}).`);
+    }
+    return DraftRequest.parseResponse(await res.json());
+  }
+
+  const res = await fetch("/api/draft-email", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 402) {
+    throw new Error("Add your Anthropic API key above — this app runs drafts on your own account.");
+  }
+  if (!res.ok) throw new Error(data.error || "Request failed.");
+  return data.draft;
+}
+
+/* ---------- generate ---------- */
+$("go").addEventListener("click", async () => {
+  const sender = $("sender").value.trim();
+  const jobText = $("jobText").value.trim();
+
+  if (!sender) return setStatus("Add the address you're sending from.", true);
+  if (!resume) return setStatus("Save a resume first.", true);
+  if (!shot && !jobText) return setStatus("Add a screenshot or paste the job text.", true);
+
+  $("go").disabled = true;
+  setStatus("Reading the posting and drafting… this takes a few seconds.");
+
+  try {
+    const payload = { senderEmail: sender, jobText };
+    if (shot) { payload.screenshotBase64 = shot.base64; payload.screenshotType = shot.type; }
+    if (resume.type === "pdf") payload.resumePdfBase64 = resume.base64;
+    else payload.resumeText = resume.text;
+
+    render(await draft(payload));
+    setStatus("");
+  } catch (err) {
+    setStatus(err.message, true);
+  } finally {
+    $("go").disabled = false;
+  }
+});
+
+/* ---------- render ---------- */
+let current = null;
+
+function render(d) {
+  current = d;
+  $("toField").value = d.recruiterEmail || "";
+  $("subjField").value = d.subject || "";
+  $("bodyField").value = d.emailBody || "";
+
+  const flags = [];
+  if (!d.recruiterEmail) {
+    flags.push(`<div class="flag bad"><h3>No recruiter email found</h3>
+      Nothing to send to — check the posting and type the address in below.</div>`);
+  }
+  if (d.gaps?.length) {
+    flags.push(`<div class="flag bad"><h3>Requirements you don't meet</h3><ul>${
+      d.gaps.map((g) => `<li>${esc(g)}</li>`).join("")}</ul>
+      <p style="margin:8px 0 0">Decide whether this application is worth sending before you do.</p></div>`);
+  }
+  if (d.ambiguities?.length) {
+    flags.push(`<div class="flag"><h3>Verify these</h3><ul>${
+      d.ambiguities.map((a) => `<li>${esc(a)}</li>`).join("")}</ul></div>`);
+  }
+  if (d.resumeNotes?.length) {
+    flags.push(`<div class="flag"><h3>Resume tweaks for this role</h3><ul>${
+      d.resumeNotes.map((n) => `<li>${esc(n)}</li>`).join("")}</ul></div>`);
+  }
+  $("flags").innerHTML = flags.join("");
+
+  $("out").style.display = "block";
+  $("out").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+
+/* ---------- outputs ---------- */
+const mimeName = () => resume.type === "pdf"
+  ? "application/pdf"
+  : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+// RFC 2047 for non-ASCII headers (em dashes in subjects are common).
+const encHeader = (s) => /^[\x20-\x7E]*$/.test(s) ? s : "=?UTF-8?B?" + utf8ToBase64(s) + "?=";
+const wrap76 = (s) => s.replace(/(.{76})/g, "$1\r\n");
+
+$("dlEml").addEventListener("click", () => {
+  const to = $("toField").value.trim();
+  if (!to) return setStatus("Add a recipient address first.", true);
+
+  const b = "b" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+  const eml = [
+    "From: " + $("sender").value.trim(),
+    "To: " + to,
+    "Subject: " + encHeader($("subjField").value),
+    "Date: " + new Date().toUTCString(),
+    "MIME-Version: 1.0",
+    'Content-Type: multipart/mixed; boundary="' + b + '"',
+    "",
+    "--" + b,
+    "Content-Type: text/plain; charset=utf-8",
+    "Content-Transfer-Encoding: base64",
+    "",
+    wrap76(utf8ToBase64($("bodyField").value)),
+    "--" + b,
+    "Content-Type: " + mimeName() + '; name="' + resume.name + '"',
+    'Content-Disposition: attachment; filename="' + resume.name + '"',
+    "Content-Transfer-Encoding: base64",
+    "",
+    wrap76(resume.base64),
+    "--" + b + "--",
+    ""
+  ].join("\r\n");
+
+  const url = URL.createObjectURL(new Blob([eml], { type: "message/rfc822" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = ((current?.company || "application").replace(/[^a-z0-9]+/gi, "-").toLowerCase()) + ".eml";
+  a.click();
+  URL.revokeObjectURL(url);
+  setStatus("Downloaded. Open it in your mail client, or drag it into Gmail.");
+});
+
+$("copyBody").addEventListener("click", async () => {
+  await navigator.clipboard.writeText($("bodyField").value);
+  setStatus("Body copied.");
+});
+
+$("openMail").addEventListener("click", () => {
+  const to = encodeURIComponent($("toField").value.trim());
+  const su = encodeURIComponent($("subjField").value);
+  const bd = encodeURIComponent($("bodyField").value);
+  location.href = `mailto:${to}?subject=${su}&body=${bd}`;
+  setStatus("Opened your mail app — attach the resume yourself, mailto can't carry files.");
+});
+
+/* ---------- service worker ---------- */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
+}
+</script>
+</body>
+</html>
