@@ -2,6 +2,7 @@
 // No tables for layout, no text boxes, no images: just headings and paragraphs so
 // applicant tracking systems parse it cleanly.
 const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } = require("docx");
+const { verifyIdToken } = require("./_firebaseAdmin");
 
 function textParagraph(text, opts = {}) {
   return new Paragraph({ spacing: { after: 100 }, ...opts, children: [new TextRun({ text, ...opts.run })] });
@@ -13,6 +14,12 @@ function bulletParagraph(text) {
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
+
+  try {
+    await verifyIdToken((req.body || {}).idToken);
+  } catch (e) {
+    return res.status(401).json({ error: "please sign in again" });
+  }
 
   const { resume, contact } = req.body || {};
   if (!resume) return res.status(400).json({ error: "missing resume" });

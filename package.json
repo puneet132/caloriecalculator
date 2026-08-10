@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "description": "Static PWAs deployed via Vercel, with a few serverless API routes.",
   "dependencies": {
-    "docx": "^9.1.0"
+    "docx": "^9.1.0",
+    "firebase-admin": "^12.7.0"
   }
 }

@@ -10,94 +10,41 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<style>
-  :root{
-    --ink:#12213A; --ink2:#1b2f52; --paper:#f6f5f1; --card:#ffffff;
-    --coral:#FF6B4A; --coral-d:#e2542f; --green:#2f9e5c; --amber:#c8862b; --red:#c94444;
-    --muted:#6b7280; --line:#e6e4dd;
-  }
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  html,body{margin:0; padding:0; background:var(--paper); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif;}
-  body{padding-bottom:env(safe-area-inset-bottom);}
-  #app{max-width:560px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column;}
-  header.top{position:sticky; top:0; z-index:5; background:var(--ink); color:#fff; padding:14px 16px calc(14px + env(safe-area-inset-top)); padding-top:calc(14px + env(safe-area-inset-top)); display:flex; align-items:center; justify-content:space-between;}
-  header.top .brand{font-weight:700; font-size:16px; display:flex; align-items:center; gap:8px;}
-  header.top .brand .dot{width:8px; height:8px; border-radius:50%; background:var(--coral);}
-  header.top nav{display:flex; gap:14px;}
-  header.top nav button{background:none; border:none; color:#cdd6e6; font-size:13px; padding:4px 2px;}
-  header.top nav button.active{color:#fff; font-weight:700;}
-  main{flex:1; padding:16px; padding-bottom:32px;}
-  .screen{display:none;}
-  .screen.active{display:block;}
-  h1{font-size:22px; margin:4px 0 6px;}
-  h2{font-size:17px; margin:18px 0 8px;}
-  p.sub{color:var(--muted); font-size:14px; line-height:1.5; margin:0 0 20px;}
-  .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:14px;}
-  .capture-row{display:flex; flex-direction:column; gap:12px; margin-top:18px;}
-  .btn{display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:16px; border-radius:14px; border:none; font-size:16px; font-weight:700; cursor:pointer;}
-  .btn-primary{background:var(--coral); color:#fff;}
-  .btn-primary:active{background:var(--coral-d);}
-  .btn-outline{background:#fff; color:var(--ink); border:1.5px solid var(--ink);}
-  .btn-ghost{background:transparent; color:var(--ink); border:1.5px solid var(--line); font-weight:600;}
-  .btn-sm{padding:10px 14px; font-size:14px; border-radius:10px; width:auto;}
-  .btn-row{display:flex; gap:10px;}
-  .btn-row .btn{flex:1;}
-  input[type=file]{display:none;}
-  .spinner{width:34px; height:34px; border-radius:50%; border:3px solid var(--line); border-top-color:var(--coral); animation:spin 0.8s linear infinite; margin:24px auto;}
-  @keyframes spin{to{transform:rotate(360deg);}}
-  .center{text-align:center;}
-  .status-text{font-size:15px; color:var(--muted); min-height:20px;}
-  .chip{display:inline-block; padding:10px 14px; border-radius:999px; border:1.5px solid var(--line); background:#fff; margin:4px 6px 4px 0; font-size:14px; cursor:pointer;}
-  .chip:active{background:var(--paper);}
-  .field{margin-bottom:14px;}
-  .field label{display:block; font-size:13px; font-weight:600; color:var(--muted); margin-bottom:6px;}
-  .field input, .field textarea, .field select{width:100%; padding:11px 12px; border-radius:10px; border:1.5px solid var(--line); font-size:15px; font-family:inherit; background:#fff; color:var(--ink);}
-  .field textarea{resize:vertical;}
-  .badge{display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:700;}
-  .badge-strong{background:#e4f6ea; color:var(--green);}
-  .badge-partial{background:#fbeed9; color:var(--amber);}
-  .badge-mismatch{background:#fbe4e4; color:var(--red);}
-  .badge-status{background:#eef0f4; color:var(--ink2);}
-  .verdict-banner{border-radius:14px; padding:14px 16px; margin-bottom:16px;}
-  .verdict-strong{background:#e4f6ea; border:1px solid #bfe6cc;}
-  .verdict-partial{background:#fbeed9; border:1px solid #edcf9c;}
-  .verdict-mismatch{background:#fbe4e4; border:1px solid #f0bdbd;}
-  .verdict-banner .title{font-weight:800; margin-bottom:4px;}
-  ul.changed{margin:8px 0 0; padding-left:20px; font-size:14px; color:var(--ink2);}
-  ul.changed li{margin-bottom:4px;}
-  .log-item{display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--line); cursor:pointer;}
-  .log-item:last-child{border-bottom:none;}
-  .log-item .lname{font-weight:700; font-size:15px;}
-  .log-item .lrole{font-size:13px; color:var(--muted);}
-  .log-item .lmeta{text-align:right; font-size:12px; color:var(--muted);}
-  .empty{color:var(--muted); font-size:14px; padding:20px 0; text-align:center;}
-  .backlink{background:none; border:none; color:var(--muted); font-size:14px; padding:0 0 12px; cursor:pointer;}
-  .toggle-row{display:flex; gap:8px;}
-  .toggle-row button{flex:1; padding:10px; border-radius:10px; border:1.5px solid var(--line); background:#fff; font-size:14px;}
-  .toggle-row button.on{background:var(--ink); color:#fff; border-color:var(--ink);}
-  .warn-banner{background:#fff4e0; border:1px solid #f0d59c; border-radius:12px; padding:12px 14px; font-size:13px; color:#7a5a12; margin-bottom:14px;}
-  .toast{position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff; padding:10px 18px; border-radius:999px; font-size:13px; z-index:20; opacity:0; pointer-events:none; transition:opacity .2s;}
-  .toast.show{opacity:1;}
-  a.link{color:var(--coral-d); text-decoration:underline; font-size:13px;}
-  .hr{height:1px; background:var(--line); margin:16px 0;}
-  textarea#emailBody{min-height:220px; line-height:1.5;}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="app">
   <header class="top">
     <div class="brand"><span class="dot"></span> Job Agent</div>
-    <nav>
+    <nav id="topNav" style="display:none;">
       <button data-nav="home" class="active">Capture</button>
       <button data-nav="log">Log</button>
       <button data-nav="profile">Profile</button>
+      <img id="userAvatar" class="avatar" alt="">
     </nav>
   </header>
   <main>
 
-    <section id="screen-home" class="screen active">
+    <section id="screen-login" class="screen active">
+      <div class="login-hero">
+        <div class="mark"><span>✈️</span></div>
+        <h1>Job Application Agent</h1>
+        <p class="sub">Screenshot a posting. Get a fit check, a tailored resume, and a drafted email. Your applications, tracked and followed up on, wherever you sign in.</p>
+      </div>
+      <button class="btn btn-google" id="btnGoogleSignIn">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.95v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.17.28-1.7V4.97H.95A9 9 0 0 0 0 9c0 1.45.35 2.83.95 4.03l3-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .95 4.97l3 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
+        Sign in with Google
+      </button>
+      <p class="sub center" style="margin-top:16px;">Your data (profile, applications, resumes) stays tied to your account. Your AI provider keys are encrypted and never leave the server.</p>
+    </section>
+
+    <section id="screen-home" class="screen">
       <h1>Screenshot the post</h1>
       <p class="sub">Camera or gallery — that's the only input. Everything else, the app does for you.</p>
+      <div class="model-select-row">
+        <select id="providerSelect"></select>
+        <select id="modelSelect"></select>
+      </div>
       <div class="capture-row">
         <button class="btn btn-primary" id="btnCamera">📷 Take Photo</button>
         <button class="btn btn-outline" id="btnUpload">🖼 Upload from Gallery</button>
@@ -106,6 +53,12 @@
       <input type="file" id="fileUpload" accept="image/*">
       <div class="hr"></div>
       <p class="sub" style="margin-bottom:0;">Works best on LinkedIn job-post screenshots — recruiter line, requirements, and the "share your resume at…" line all get read automatically.</p>
+    </section>
+
+    <section id="screen-noprovider" class="screen">
+      <h1>Add an AI provider first</h1>
+      <p class="sub">You'll need at least one API key before the app can read a screenshot. Gemini has a real free tier — a good place to start.</p>
+      <button class="btn btn-primary" data-nav="profile">Go to Settings</button>
     </section>
 
     <section id="screen-processing" class="screen">
@@ -218,6 +171,12 @@
       <p class="sub">This is the only source of truth the app draws from. Nothing gets invented beyond what's here.</p>
 
       <div class="card">
+        <h2 style="margin-top:0;">AI providers</h2>
+        <p class="sub" style="margin-bottom:10px;">Each provider needs its own API key from its own developer console — a ChatGPT Plus/Claude Pro/Gemini Advanced subscription doesn't include one. Keys are encrypted and stored server-side; this app never shows a saved key again, only a masked preview.</p>
+        <div id="providerList"></div>
+      </div>
+
+      <div class="card">
         <h2 style="margin-top:0;">Identity</h2>
         <div class="field"><label>Name</label><input id="pName"></div>
         <div class="field"><label>Location</label><input id="pLocation"></div>
@@ -250,564 +209,14 @@
         <button class="btn btn-ghost" id="btnResetProfile">Reset to default</button>
         <button class="btn btn-primary" id="btnSaveProfile">Save</button>
       </div>
+
+      <div class="hr"></div>
+      <button class="btn btn-ghost" id="btnSignOut">Sign out</button>
     </section>
 
   </main>
 </div>
 <div class="toast" id="toast"></div>
-
-<script>
-/* ---------- default profile (seed) ---------- */
-const DEFAULT_PROFILE = {
-  identity: {
-    name: "Puneet Gupta",
-    location: "Gurugram, India",
-    phone: "+91-9602801140",
-    email: "puneetgupta132@gmail.com",
-    linkedin: "linkedin.com/in/puneetgupta132"
-  },
-  standingAnswers: {
-    notice_period: "30 days",
-    current_ctc: "",
-    expected_ctc: "",
-    location: "Gurugram",
-    open_to_relocation: "yes"
-  },
-  resume: {
-    experience_years: 4,
-    domains: ["BFSI/insurance", "e-commerce", "supply chain", "US healthcare (HIPAA)"],
-    headline_options: ["Product Manager", "Product Owner", "Business Systems Analyst", "Business Analyst"],
-    experience: [
-      {
-        title: "Business Consultant (Product Owner / Business Systems Analyst)",
-        company: "Kellton — deployed at Axis Max Life Insurance",
-        location: "Gurugram, India",
-        dates: "Aug 2025–Present",
-        achievements: [
-          "Led mSpace, a 0-to-1 insurance app, from concept to launch with zero critical go-live issues",
-          "Drove 5,000+ customer activations and a 50% engagement uplift post-launch",
-          "Cut cross-team requirement ambiguity by 40% through clearer PRDs/BRDs/FSDs",
-          "Reduced post-launch production incidents by 50%",
-          "Cut time-to-market by 30% using Value vs. Effort prioritization",
-          "Improved feature ROI by 25% via Figma prototyping collaboration with UI/UX",
-          "Authored 90+ artifacts: PRDs, BRDs, FSDs, user journeys, process flows",
-          "Aligned 5+ Scrum teams around a single roadmap",
-          "Onboarded 3+ international enterprise accounts within 3 months",
-          "Won the Best Employee Award at Axis Max Life"
-        ]
-      },
-      {
-        title: "Business Analyst",
-        company: "AppInventiv",
-        location: "Noida, India",
-        dates: "Oct 2022–Jul 2025",
-        achievements: [
-          "Authored requirement artifacts (PRDs, BRDs, FSDs, user journeys, process flows) across e-commerce, supply chain, and US healthcare (HIPAA) engagements",
-          "Ran competitor benchmarking and gap analysis to shape product roadmaps",
-          "Defined and tracked KPIs across multiple client engagements",
-          "Won the Spotlight Award at AppInventiv"
-        ]
-      }
-    ],
-    education: [
-      { degree: "B.Tech, Computer Science", school: "GIT Jaipur", dates: "2017–2021" }
-    ],
-    projects: [
-      { name: "AI Shopping Copilot", description: "AI-assisted shopping copilot concept for a D2C e-commerce context — product discovery and conversational recommendations." },
-      { name: "Fourteen", description: "A diet + workout coach PWA, built end-to-end with Claude Code — installable, offline-capable, personal fat-loss tracker." }
-    ],
-    skills: [
-      "Roadmap strategy", "Prioritization (MoSCoW, Value vs. Effort)", "PRD/BRD/FSD authoring",
-      "Gap analysis", "KPI definition & tracking", "Competitor benchmarking",
-      "JIRA", "Confluence", "Figma", "Visio", "Balsamiq", "Miro", "Notion",
-      "Firebase", "Amplitude", "Mixpanel", "Zendesk", "Basic SQL",
-      "AI-assisted workflows (Claude/ChatGPT for PRD drafting, research synthesis, evaluating AI feature output)"
-    ]
-  }
-};
-
-/* ---------- storage: profile ---------- */
-const PROFILE_KEY = "jobagent.profile.v1";
-function loadProfile() {
-  try {
-    const raw = localStorage.getItem(PROFILE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch (e) {}
-  return JSON.parse(JSON.stringify(DEFAULT_PROFILE));
-}
-function saveProfile(p) { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); }
-let PROFILE = loadProfile();
-
-/* ---------- storage: IndexedDB application log ---------- */
-const DB_NAME = "jobagent";
-const STORE = "applications";
-function openDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains(STORE)) {
-        const s = db.createObjectStore(STORE, { keyPath: "id" });
-        s.createIndex("companyRole", "companyRole", { unique: false });
-        s.createIndex("date", "date", { unique: false });
-      }
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-async function dbAdd(record) {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, "readwrite");
-    tx.objectStore(STORE).put(record);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
-}
-async function dbAll() {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, "readonly");
-    const req = tx.objectStore(STORE).getAll();
-    req.onsuccess = () => resolve(req.result.sort((a, b) => b.date.localeCompare(a.date)));
-    req.onerror = () => reject(req.error);
-  });
-}
-async function dbFindByCompanyRole(key) {
-  const all = await dbAll();
-  return all.find(r => r.companyRole === key);
-}
-async function dbGet(id) {
-  const all = await dbAll();
-  return all.find(r => r.id === id);
-}
-
-/* ---------- nav ---------- */
-function showScreen(id) {
-  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-  document.getElementById("screen-" + id).classList.add("active");
-  document.querySelectorAll("header nav button").forEach(b => b.classList.remove("active"));
-  const navBtn = document.querySelector(`header nav button[data-nav="${id}"]`);
-  if (navBtn) navBtn.classList.add("active");
-  window.scrollTo(0, 0);
-}
-document.querySelectorAll("[data-nav]").forEach(el => {
-  el.addEventListener("click", () => {
-    const id = el.getAttribute("data-nav");
-    if (id === "log") renderLog();
-    if (id === "profile") fillProfileForm();
-    showScreen(id);
-  });
-});
-
-function toast(msg) {
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 2200);
-}
-
-/* ---------- capture ---------- */
-const btnCamera = document.getElementById("btnCamera");
-const btnUpload = document.getElementById("btnUpload");
-const fileCamera = document.getElementById("fileCamera");
-const fileUpload = document.getElementById("fileUpload");
-btnCamera.addEventListener("click", () => fileCamera.click());
-btnUpload.addEventListener("click", () => fileUpload.click());
-fileCamera.addEventListener("change", e => handleFile(e.target.files[0]));
-fileUpload.addEventListener("change", e => handleFile(e.target.files[0]));
-
-let SESSION = { imageB64: null, jd: null, generation: null, mismatchOverridden: false };
-
-function handleFile(file) {
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    const img = new Image();
-    img.onload = () => {
-      const maxW = 1600;
-      const scale = Math.min(1, maxW / img.width);
-      const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
-      const canvas = document.createElement("canvas");
-      canvas.width = w; canvas.height = h;
-      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
-      SESSION.imageB64 = dataUrl.split(",")[1];
-      startExtraction();
-    };
-    img.src = reader.result;
-  };
-  reader.readAsDataURL(file);
-}
-
-function setProcessing(text) {
-  document.getElementById("processingStatus").textContent = text;
-  showScreen("processing");
-}
-
-async function startExtraction(roleHint) {
-  setProcessing(roleHint ? "Reading that role…" : "Reading the post…");
-  try {
-    const r = await fetch("/api/job-extract", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ image: SESSION.imageB64, mediaType: "image/jpeg", roleHint })
-    });
-    const jd = await r.json();
-    if (!r.ok) { toast(jd.error || "Extraction failed"); showScreen("home"); return; }
-
-    if (jd.readable === false) {
-      document.getElementById("unreadableReason").textContent = jd.unreadable_reason || "The image didn't look like a job posting, or was too cropped/blurry to extract.";
-      showScreen("unreadable");
-      return;
-    }
-    if (jd.multiple_roles && !roleHint) {
-      const box = document.getElementById("roleChips");
-      box.innerHTML = "";
-      (jd.role_candidates || []).forEach(label => {
-        const chip = document.createElement("span");
-        chip.className = "chip";
-        chip.textContent = label;
-        chip.addEventListener("click", () => startExtraction(label));
-        box.appendChild(chip);
-      });
-      showScreen("multirole");
-      return;
-    }
-    if (!jd.recruiter_email) {
-      showScreen("noemail");
-      return;
-    }
-
-    SESSION.jd = jd;
-    await afterExtraction();
-  } catch (err) {
-    toast("Something went wrong reading that image.");
-    showScreen("home");
-  }
-}
-
-async function afterExtraction() {
-  const jd = SESSION.jd;
-  const key = `${(jd.company || "").trim().toLowerCase()}|${(jd.role_title || "").trim().toLowerCase()}`;
-  jd._companyRoleKey = key;
-  const dup = await dbFindByCompanyRole(key);
-  if (dup) {
-    document.getElementById("duplicateInfo").innerHTML =
-      `<strong>${escapeHtml(jd.company)} — ${escapeHtml(jd.role_title)}</strong><br>` +
-      `<span style="color:var(--muted); font-size:13px;">Applied ${dup.date} · status: ${dup.status} · fit: ${dup.fitVerdict}</span>`;
-    document.getElementById("btnDuplicateContinue").onclick = () => proceedPastDuplicate();
-    showScreen("duplicate");
-    return;
-  }
-  proceedPastDuplicate();
-}
-
-function proceedPastDuplicate() {
-  const jd = SESSION.jd;
-  if (jd.explicitly_requested_fields && jd.explicitly_requested_fields.length) {
-    renderQuickQuestions(jd.explicitly_requested_fields);
-    showScreen("quickq");
-    return;
-  }
-  runGenerate();
-}
-
-function renderQuickQuestions(fields) {
-  const box = document.getElementById("quickFields");
-  box.innerHTML = "";
-  const labelMap = { current_ctc: "Current CTC", expected_ctc: "Expected CTC", notice_period: "Notice period", availability: "Availability" };
-  fields.forEach(f => {
-    const div = document.createElement("div");
-    div.className = "field";
-    const label = labelMap[f] || f.replace(/_/g, " ");
-    const existing = PROFILE.standingAnswers[f] || "";
-    div.innerHTML = `<label>${escapeHtml(label)}</label><input data-qfield="${f}" value="${escapeHtml(existing)}">`;
-    box.appendChild(div);
-  });
-}
-document.getElementById("btnQuickContinue").addEventListener("click", () => {
-  document.querySelectorAll("[data-qfield]").forEach(input => {
-    PROFILE.standingAnswers[input.getAttribute("data-qfield")] = input.value;
-  });
-  saveProfile(PROFILE);
-  runGenerate();
-});
-
-async function runGenerate() {
-  setProcessing("Checking fit…");
-  const statuses = ["Checking fit…", "Tailoring the resume…", "Drafting the email…"];
-  let i = 0;
-  const rotate = setInterval(() => { i = (i + 1) % statuses.length; document.getElementById("processingStatus").textContent = statuses[i]; }, 1800);
-  try {
-    const r = await fetch("/api/job-generate", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ jd: SESSION.jd, profile: PROFILE })
-    });
-    const gen = await r.json();
-    clearInterval(rotate);
-    if (!r.ok) { toast(gen.error || "Generation failed"); showScreen("home"); return; }
-    SESSION.generation = gen;
-    SESSION.mismatchOverridden = false;
-
-    if (gen.fit.verdict === "mismatch") {
-      renderFitScreen(gen.fit);
-      showScreen("fit");
-    } else {
-      renderReview();
-      await logCurrentApplication("drafted");
-      showScreen("review");
-    }
-  } catch (err) {
-    clearInterval(rotate);
-    toast("Something went wrong generating the application.");
-    showScreen("home");
-  }
-}
-
-function renderFitScreen(fit) {
-  const banner = document.getElementById("fitBanner");
-  banner.innerHTML = `
-    <div class="verdict-banner verdict-mismatch">
-      <div class="title">Doesn't look like a fit</div>
-      <div>${escapeHtml(fit.reason || "")}</div>
-      ${fit.gap_note ? `<div style="margin-top:6px; font-size:13px; color:var(--muted);">${escapeHtml(fit.gap_note)}</div>` : ""}
-    </div>`;
-}
-document.getElementById("btnDiscardMismatch").addEventListener("click", async () => {
-  await logCurrentApplication("skipped");
-  SESSION = { imageB64: null, jd: null, generation: null, mismatchOverridden: false };
-  showScreen("home");
-});
-document.getElementById("btnApplyAnyway").addEventListener("click", async () => {
-  SESSION.mismatchOverridden = true;
-  renderReview();
-  await logCurrentApplication("drafted");
-  showScreen("review");
-});
-
-/* ---------- review screen ---------- */
-function renderReview() {
-  const jd = SESSION.jd, gen = SESSION.generation;
-  const banner = document.getElementById("reviewVerdictBanner");
-  const v = gen.fit.verdict;
-  const cls = v === "strong" ? "verdict-strong" : v === "partial" ? "verdict-partial" : "verdict-mismatch";
-  const title = v === "strong" ? "Strong fit" : v === "partial" ? "Partial fit" : "Mismatch — applying anyway";
-  banner.innerHTML = `
-    <div class="verdict-banner ${cls}">
-      <div class="title">${title}</div>
-      <div>${escapeHtml(gen.fit.reason || "")}</div>
-      ${gen.fit.gap_note ? `<div style="margin-top:6px; font-size:13px;">Gap: ${escapeHtml(gen.fit.gap_note)}</div>` : ""}
-    </div>`;
-
-  document.getElementById("emailTo").value = jd.recruiter_email || "";
-  document.getElementById("emailSubject").value = gen.email.subject || "";
-  document.getElementById("emailBody").value = gen.email.body || "";
-
-  const r = gen.resume || {};
-  let html = "";
-  if (r.title_line) html += `<div style="font-weight:700; margin-bottom:6px;">${escapeHtml(r.title_line)}</div>`;
-  if (r.summary) html += `<div style="margin-bottom:10px;">${escapeHtml(r.summary)}</div>`;
-  if (r.skills && r.skills.length) html += `<div style="margin-bottom:6px;"><strong>Skills:</strong> ${escapeHtml(r.skills.slice(0, 10).join(", "))}${r.skills.length > 10 ? "…" : ""}</div>`;
-  if (r.bullet_sections && r.bullet_sections.length) {
-    r.bullet_sections.forEach(s => {
-      html += `<div style="margin-top:8px; font-weight:600;">${escapeHtml(s.header)}</div><ul class="changed">`;
-      (s.bullets || []).forEach(b => html += `<li>${escapeHtml(b)}</li>`);
-      html += `</ul>`;
-    });
-  }
-  document.getElementById("resumePreview").innerHTML = html || "<span class='sub'>No resume content generated.</span>";
-
-  const wc = document.getElementById("whatChangedList");
-  wc.innerHTML = "";
-  (r.what_changed || []).forEach(c => {
-    const li = document.createElement("li");
-    li.textContent = c;
-    wc.appendChild(li);
-  });
-  document.getElementById("whatChangedCard").style.display = (r.what_changed && r.what_changed.length) ? "block" : "none";
-}
-
-document.getElementById("btnCopyEmail").addEventListener("click", () => {
-  navigator.clipboard.writeText(document.getElementById("emailBody").value).then(() => toast("Copied"));
-});
-document.getElementById("btnMailto").addEventListener("click", () => {
-  const to = document.getElementById("emailTo").value;
-  const subject = document.getElementById("emailSubject").value;
-  const body = document.getElementById("emailBody").value;
-  const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  toast("Resume downloads separately — attach it in your mail app");
-  window.location.href = mailto;
-});
-document.getElementById("btnDownloadResume").addEventListener("click", async () => {
-  const jd = SESSION.jd, gen = SESSION.generation;
-  try {
-    const r = await fetch("/api/job-resume-docx", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        resume: gen.resume,
-        contact: PROFILE.identity,
-        fileNameHint: `${jd.company || "resume"}-${jd.role_title || ""}`
-      })
-    });
-    if (!r.ok) { toast("Couldn't build the resume file"); return; }
-    const blob = await r.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${(jd.company || "resume").replace(/[^a-z0-9]+/gi, "-")}-resume.docx`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  } catch (e) {
-    toast("Couldn't build the resume file");
-  }
-});
-document.getElementById("btnMarkSent").addEventListener("click", async () => {
-  if (SESSION.logId) {
-    const rec = await dbGet(SESSION.logId);
-    if (rec) { rec.status = "sent"; await dbAdd(rec); }
-  }
-  toast("Marked as sent");
-  showScreen("home");
-});
-
-async function logCurrentApplication(status) {
-  const jd = SESSION.jd, gen = SESSION.generation;
-  const id = SESSION.logId || (Date.now() + "-" + Math.random().toString(36).slice(2, 8));
-  SESSION.logId = id;
-  const record = {
-    id,
-    company: jd.company || "",
-    role: jd.role_title || "",
-    companyRole: jd._companyRoleKey,
-    recruiterEmail: jd.recruiter_email || "",
-    date: new Date().toISOString().slice(0, 10),
-    fitVerdict: gen.fit.verdict + (SESSION.mismatchOverridden ? " (overridden)" : ""),
-    status,
-    email: gen.email,
-    resume: gen.resume
-  };
-  await dbAdd(record);
-}
-
-/* ---------- log ---------- */
-async function renderLog() {
-  const list = document.getElementById("logList");
-  const items = await dbAll();
-  if (!items.length) { list.innerHTML = "<div class='empty'>Nothing logged yet.</div>"; return; }
-  list.innerHTML = "";
-  items.forEach(item => {
-    const div = document.createElement("div");
-    div.className = "log-item";
-    const badgeClass = item.fitVerdict.startsWith("strong") ? "badge-strong" : item.fitVerdict.startsWith("partial") ? "badge-partial" : "badge-mismatch";
-    div.innerHTML = `
-      <div><div class="lname">${escapeHtml(item.company)}</div><div class="lrole">${escapeHtml(item.role)}</div></div>
-      <div class="lmeta"><span class="badge ${badgeClass}">${escapeHtml(item.fitVerdict)}</span><br><span class="badge badge-status" style="margin-top:4px;">${escapeHtml(item.status)}</span><br>${item.date}</div>`;
-    div.addEventListener("click", () => openLogDetail(item.id));
-    list.appendChild(div);
-  });
-}
-async function openLogDetail(id) {
-  const item = await dbGet(id);
-  if (!item) return;
-  document.getElementById("logDetailTitle").textContent = `${item.company} — ${item.role}`;
-  const body = document.getElementById("logDetailBody");
-  body.innerHTML = `
-    <div class="card">
-      <div><strong>Status:</strong> ${escapeHtml(item.status)}</div>
-      <div><strong>Fit:</strong> ${escapeHtml(item.fitVerdict)}</div>
-      <div><strong>Recruiter:</strong> ${escapeHtml(item.recruiterEmail)}</div>
-      <div><strong>Date:</strong> ${item.date}</div>
-    </div>
-    <div class="card">
-      <h2 style="margin-top:0;">Email</h2>
-      <div style="font-weight:600; margin-bottom:6px;">${escapeHtml(item.email?.subject || "")}</div>
-      <div style="white-space:pre-wrap; font-size:14px;">${escapeHtml(item.email?.body || "")}</div>
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-outline" id="btnLogMarkSent">Mark as sent</button>
-      <button class="btn btn-ghost" id="btnLogDelete">Delete</button>
-    </div>`;
-  document.getElementById("btnLogMarkSent").addEventListener("click", async () => {
-    item.status = "sent"; await dbAdd(item); toast("Marked as sent"); openLogDetail(id);
-  });
-  document.getElementById("btnLogDelete").addEventListener("click", async () => {
-    const db = await openDB();
-    db.transaction(STORE, "readwrite").objectStore(STORE).delete(id);
-    toast("Deleted"); showScreen("log"); renderLog();
-  });
-  showScreen("logdetail");
-}
-
-/* ---------- profile screen ---------- */
-function fillProfileForm() {
-  document.getElementById("pName").value = PROFILE.identity.name || "";
-  document.getElementById("pLocation").value = PROFILE.identity.location || "";
-  document.getElementById("pPhone").value = PROFILE.identity.phone || "";
-  document.getElementById("pEmail").value = PROFILE.identity.email || "";
-  document.getElementById("pLinkedin").value = PROFILE.identity.linkedin || "";
-  document.getElementById("pNotice").value = PROFILE.standingAnswers.notice_period || "";
-  document.getElementById("pCurrentCtc").value = PROFILE.standingAnswers.current_ctc || "";
-  document.getElementById("pExpectedCtc").value = PROFILE.standingAnswers.expected_ctc || "";
-  setRelo(PROFILE.standingAnswers.open_to_relocation === "yes");
-  document.getElementById("pResumeJson").value = JSON.stringify(PROFILE.resume, null, 2);
-}
-function setRelo(yes) {
-  document.getElementById("pReloYes").classList.toggle("on", yes);
-  document.getElementById("pReloNo").classList.toggle("on", !yes);
-}
-document.getElementById("pReloYes").addEventListener("click", () => setRelo(true));
-document.getElementById("pReloNo").addEventListener("click", () => setRelo(false));
-document.getElementById("btnSaveProfile").addEventListener("click", () => {
-  let resumeData;
-  try {
-    resumeData = JSON.parse(document.getElementById("pResumeJson").value);
-  } catch (e) {
-    toast("Resume JSON isn't valid — not saved");
-    return;
-  }
-  PROFILE = {
-    identity: {
-      name: document.getElementById("pName").value,
-      location: document.getElementById("pLocation").value,
-      phone: document.getElementById("pPhone").value,
-      email: document.getElementById("pEmail").value,
-      linkedin: document.getElementById("pLinkedin").value
-    },
-    standingAnswers: {
-      notice_period: document.getElementById("pNotice").value,
-      current_ctc: document.getElementById("pCurrentCtc").value,
-      expected_ctc: document.getElementById("pExpectedCtc").value,
-      location: document.getElementById("pLocation").value,
-      open_to_relocation: document.getElementById("pReloYes").classList.contains("on") ? "yes" : "no"
-    },
-    resume: resumeData
-  };
-  saveProfile(PROFILE);
-  toast("Profile saved");
-});
-document.getElementById("btnResetProfile").addEventListener("click", () => {
-  if (!confirm("Reset profile to the default seed data? This discards your edits.")) return;
-  PROFILE = JSON.parse(JSON.stringify(DEFAULT_PROFILE));
-  saveProfile(PROFILE);
-  fillProfileForm();
-  toast("Reset to default");
-});
-
-/* ---------- util ---------- */
-function escapeHtml(s) {
-  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-}
-
-/* ---------- service worker ---------- */
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
-}
-</script>
+<script type="module" src="app.js"></script>
 </body>
 </html>

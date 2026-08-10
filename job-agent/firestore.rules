@@ -1,0 +1,42 @@
+rules_version = '2';
+
+// Data model:
+//
+// users/{uid}
+//   identity { name, location, phone, email, linkedin }
+//   standingAnswers { notice_period, current_ctc, expected_ctc, location, open_to_relocation }
+//   resume { experience_years, domains, headline_options, experience[], education[], projects[], skills[] }
+//   preferredProvider, preferredModel
+//   createdAt, updatedAt
+//
+// users/{uid}/applications/{appId}
+//   company, role, companyRole (lowercased "company|role" dup-check key), recruiterEmail
+//   dateApplied, fitVerdict, status ("drafted" | "sent" | "skipped")
+//   resume {...tailored snapshot...}, email { subject, body }
+//   followUps: [{ id, date, subject, body, status }]
+//   provider, model, createdAt
+//
+// serverOnly_providerKeys/{uid}_{provider}
+//   uid, provider, encryptedKey { iv, ciphertext, tag }, model, addedAt
+//   Written only by serverless functions via the Firebase Admin SDK, which
+//   authenticates with a service account and bypasses these rules entirely.
+//   The client SDK must never be able to read or write this collection —
+//   that's the whole point of storing keys server-side.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /users/{uid} {
+      allow read, update, delete: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid;
+
+      match /applications/{appId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+
+    match /serverOnly_providerKeys/{docId} {
+      allow read, write: if false;
+    }
+  }
+}
