@@ -105,9 +105,8 @@ let SESSION = { imageB64: null, jd: null, generation: null, mismatchOverridden: 
 function showScreen(id) {
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   document.getElementById("screen-" + id).classList.add("active");
-  document.querySelectorAll("header nav button[data-nav]").forEach(b => b.classList.remove("active"));
-  const navBtn = document.querySelector(`header nav button[data-nav="${id}"]`);
-  if (navBtn) navBtn.classList.add("active");
+  document.querySelectorAll(".navlink").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(`.navlink[data-nav="${id}"]`).forEach(b => b.classList.add("active"));
   window.scrollTo(0, 0);
 }
 document.addEventListener("click", e => {
@@ -144,12 +143,12 @@ document.getElementById("btnSignOut").addEventListener("click", async () => {
 onAuthStateChanged(auth, async user => {
   if (!user) {
     CURRENT_USER = null;
-    document.getElementById("topNav").style.display = "none";
+    document.body.classList.remove("authed");
     showScreen("login");
     return;
   }
   CURRENT_USER = user;
-  document.getElementById("topNav").style.display = "flex";
+  document.body.classList.add("authed");
   document.getElementById("userAvatar").src = user.photoURL || "icons/icon-192.png";
   try {
     await Promise.all([loadProfile(), loadProviderStatus()]);
@@ -388,6 +387,8 @@ function handleFile(file) {
   if (!sel) { showScreen("noprovider"); return; }
   SESSION.provider = sel.provider;
   SESSION.model = sel.model;
+  SESSION.duplicateInfo = null;
+  SESSION.logId = null;
 
   const reader = new FileReader();
   reader.onload = () => {
@@ -456,15 +457,8 @@ async function afterExtraction() {
   const jd = SESSION.jd;
   const key = `${(jd.company || "").trim().toLowerCase()}|${(jd.role_title || "").trim().toLowerCase()}`;
   jd._companyRoleKey = key;
-  const dup = await dbFindByCompanyRole(key);
-  if (dup) {
-    document.getElementById("duplicateInfo").innerHTML =
-      `<strong>${escapeHtml(jd.company)} — ${escapeHtml(jd.role_title)}</strong><br>` +
-      `<span style="color:var(--muted); font-size:13px;">Applied ${dup.date} · status: ${dup.status} · fit: ${dup.fitVerdict}</span>`;
-    document.getElementById("btnDuplicateContinue").onclick = () => proceedPastDuplicate();
-    showScreen("duplicate");
-    return;
-  }
+  // Informational only — never blocks re-drafting or reapplying to the same posting.
+  SESSION.duplicateInfo = await dbFindByCompanyRole(key);
   proceedPastDuplicate();
 }
 
@@ -549,6 +543,16 @@ document.getElementById("btnApplyAnyway").addEventListener("click", async () => 
 /* ---------- review screen ---------- */
 function renderReview() {
   const jd = SESSION.jd, gen = SESSION.generation;
+
+  const dupBanner = document.getElementById("reviewDuplicateBanner");
+  if (SESSION.duplicateInfo) {
+    const dup = SESSION.duplicateInfo;
+    dupBanner.style.display = "block";
+    dupBanner.textContent = `You applied here before — ${dup.date} · status: ${dup.status}. This is being logged as a separate attempt, not a replacement.`;
+  } else {
+    dupBanner.style.display = "none";
+  }
+
   const banner = document.getElementById("reviewVerdictBanner");
   const v = gen.fit.verdict;
   const cls = v === "strong" ? "verdict-strong" : v === "partial" ? "verdict-partial" : "verdict-mismatch";
@@ -669,7 +673,7 @@ async function renderLog() {
     const badgeClass = item.fitVerdict.startsWith("strong") ? "badge-strong" : item.fitVerdict.startsWith("partial") ? "badge-partial" : "badge-mismatch";
     div.innerHTML = `
       <div><div class="lname">${escapeHtml(item.company)}</div><div class="lrole">${escapeHtml(item.role)}</div></div>
-      <div class="lmeta"><span class="badge ${badgeClass}">${escapeHtml(item.fitVerdict)}</span><br><span class="badge badge-status" style="margin-top:4px;">${escapeHtml(item.status)}</span><br>${item.date}</div>`;
+      <div class="lmeta"><span class="badge ${badgeClass}">${escapeHtml(item.fitVerdict)}</span><br><span class="badge badge-status" style="margin-top:4px;">${escapeHtml(item.status)}</span><br>${escapeHtml(item.date)}</div>`;
     div.addEventListener("click", () => openLogDetail(item.id));
     list.appendChild(div);
   });
@@ -679,6 +683,11 @@ function daysSince(dateStr) {
   if (!dateStr) return null;
   const d = new Date(dateStr + "T00:00:00");
   return Math.max(0, Math.round((Date.now() - d.getTime()) / 86400000));
+}
+function formatDaysAgo(n) {
+  if (n === null || n === undefined) return "unknown";
+  if (n === 0) return "today";
+  return n === 1 ? "1 day ago" : `${n} days ago`;
 }
 
 async function openLogDetail(id) {
@@ -692,7 +701,7 @@ async function openLogDetail(id) {
       <div><strong>Status:</strong> ${escapeHtml(item.status)}</div>
       <div><strong>Fit:</strong> ${escapeHtml(item.fitVerdict)}</div>
       <div><strong>Recruiter:</strong> ${escapeHtml(item.recruiterEmail)}</div>
-      <div><strong>Applied:</strong> ${item.date} (${daysSince(item.dateApplied || item.date)} days ago)</div>
+      <div><strong>Applied:</strong> ${escapeHtml(item.date)} (${formatDaysAgo(daysSince(item.dateApplied || item.date))})</div>
     </div>
     <div class="card">
       <h2 style="margin-top:0;">Email</h2>

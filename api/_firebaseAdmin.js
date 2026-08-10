@@ -15,7 +15,9 @@ function getAdminApp() {
 
 async function verifyIdToken(idToken) {
   if (!idToken) throw new Error("missing idToken");
-  return admin.auth(getAdminApp()).verifyIdToken(idToken);
+  // checkRevoked:true rejects a token the moment its account is disabled/revoked,
+  // instead of letting an already-issued token keep working until it naturally expires.
+  return admin.auth(getAdminApp()).verifyIdToken(idToken, true);
 }
 
 function firestore() {

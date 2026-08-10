@@ -8,18 +8,24 @@ function getKey() {
   return Buffer.from(hex, "hex");
 }
 
-function encrypt(plaintext) {
+// `aad` (associated data — e.g. "${uid}_${provider}") binds the ciphertext to the
+// Firestore record it lives in, so a blob copied onto a different document (only
+// possible with direct Firestore/Admin-SDK access, which client requests never have)
+// fails to decrypt instead of silently decrypting under the wrong owner.
+function encrypt(plaintext, aad) {
   const key = getKey();
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
+  if (aad) cipher.setAAD(Buffer.from(aad, "utf8"));
   const ciphertext = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
   const tag = cipher.getAuthTag();
   return { iv: iv.toString("base64"), ciphertext: ciphertext.toString("base64"), tag: tag.toString("base64") };
 }
 
-function decrypt({ iv, ciphertext, tag }) {
+function decrypt({ iv, ciphertext, tag }, aad) {
   const key = getKey();
   const decipher = crypto.createDecipheriv("aes-256-gcm", key, Buffer.from(iv, "base64"));
+  if (aad) decipher.setAAD(Buffer.from(aad, "utf8"));
   decipher.setAuthTag(Buffer.from(tag, "base64"));
   const plaintext = Buffer.concat([decipher.update(Buffer.from(ciphertext, "base64")), decipher.final()]);
   return plaintext.toString("utf8");

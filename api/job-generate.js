@@ -3,7 +3,7 @@
 // whichever provider/model the user picked, using their own stored key.
 const { verifyIdToken, firestore } = require("./_firebaseAdmin");
 const { decrypt } = require("./_crypto");
-const { callProvider } = require("./_llm");
+const { callProvider, PROVIDERS } = require("./_llm");
 
 const GENERATE_TOOL = {
   name: "record_application",
@@ -77,13 +77,13 @@ module.exports = async (req, res) => {
     return res.status(401).json({ error: "please sign in again" });
   }
   if (!jd || !profile) return res.status(400).json({ error: "missing jd or profile" });
-  if (!provider || !model) return res.status(400).json({ error: "missing provider/model" });
+  if (!PROVIDERS.includes(provider) || !model) return res.status(400).json({ error: "missing or unknown provider/model" });
 
   let apiKey;
   try {
     const doc = await firestore().collection("serverOnly_providerKeys").doc(`${uid}_${provider}`).get();
     if (!doc.exists) return res.status(400).json({ error: `no ${provider} key configured — add one in Settings` });
-    apiKey = decrypt(doc.data().encryptedKey);
+    apiKey = decrypt(doc.data().encryptedKey, `${uid}_${provider}`);
   } catch (e) {
     return res.status(500).json({ error: "could not load your provider key" });
   }

@@ -16,13 +16,14 @@
 <div id="app">
   <header class="top">
     <div class="brand"><span class="dot"></span> Job Agent</div>
-    <nav id="topNav" style="display:none;">
-      <button data-nav="home" class="active">Capture</button>
-      <button data-nav="log">Log</button>
-      <button data-nav="profile">Profile</button>
-      <img id="userAvatar" class="avatar" alt="">
-    </nav>
+    <img id="userAvatar" class="avatar" alt="">
   </header>
+  <div class="layout">
+    <nav class="sidebar" id="sidebarNav">
+      <button class="navlink" data-nav="home"><span class="navicon">📸</span><span class="navlabel">Capture</span></button>
+      <button class="navlink" data-nav="log"><span class="navicon">📋</span><span class="navlabel">Applications</span></button>
+      <button class="navlink" data-nav="profile"><span class="navicon">⚙️</span><span class="navlabel">Profile</span></button>
+    </nav>
   <main>
 
     <section id="screen-login" class="screen active">
@@ -87,16 +88,6 @@
       <button class="btn btn-primary" data-nav="home">Try again</button>
     </section>
 
-    <section id="screen-duplicate" class="screen">
-      <button class="backlink" data-nav="home">← back</button>
-      <h1>Looks familiar</h1>
-      <div class="card" id="duplicateInfo"></div>
-      <div class="btn-row">
-        <button class="btn btn-ghost" data-nav="home">Discard</button>
-        <button class="btn btn-primary" id="btnDuplicateContinue">Continue anyway</button>
-      </div>
-    </section>
-
     <section id="screen-quickq" class="screen">
       <button class="backlink" data-nav="home">← back</button>
       <h1>Quick one before I draft this</h1>
@@ -116,6 +107,7 @@
 
     <section id="screen-review" class="screen">
       <h1>Review &amp; send</h1>
+      <div class="warn-banner" id="reviewDuplicateBanner" style="display:none;"></div>
       <div id="reviewVerdictBanner"></div>
 
       <div class="card">
@@ -215,6 +207,12 @@
     </section>
 
   </main>
+  </div>
+  <nav class="bottom-tabs" id="bottomTabs">
+    <button class="navlink" data-nav="home"><span class="navicon">📸</span><span class="navlabel">Capture</span></button>
+    <button class="navlink" data-nav="log"><span class="navicon">📋</span><span class="navlabel">Log</span></button>
+    <button class="navlink" data-nav="profile"><span class="navicon">⚙️</span><span class="navlabel">Profile</span></button>
+  </nav>
 </div>
 <div class="toast" id="toast"></div>
 <script type="module" src="app.js"></script>

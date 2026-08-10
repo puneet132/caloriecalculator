@@ -105,4 +105,4 @@ async function callProvider({ provider, model, apiKey, system, text, image, tool
   throw new Error(`unknown provider: ${provider}`);
 }
 
-module.exports = { callProvider, MODEL_REGISTRY };
+module.exports = { callProvider, MODEL_REGISTRY, PROVIDERS: Object.keys(MODEL_REGISTRY) };

@@ -3,8 +3,7 @@
 // key value once saved — only a boolean "configured" + a masked last-4 preview.
 const { verifyIdToken, firestore } = require("./_firebaseAdmin");
 const { encrypt } = require("./_crypto");
-
-const PROVIDERS = ["anthropic", "openai", "gemini"];
+const { PROVIDERS } = require("./_llm");
 
 async function validateKey(provider, apiKey) {
   try {
@@ -74,7 +73,7 @@ module.exports = async (req, res) => {
   if (!valid) return res.status(400).json({ error: "that key was rejected by the provider — double-check it and try again" });
 
   try {
-    const encrypted = encrypt(apiKey);
+    const encrypted = encrypt(apiKey, `${uid}_${provider}`);
     const preview = `${apiKey.slice(0, 6)}…${apiKey.slice(-4)}`;
     await db.collection("serverOnly_providerKeys").doc(`${uid}_${provider}`).set({
       uid, provider,
