@@ -1,0 +1,9 @@
+{
+  "name": "caloriecalculator",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Static PWAs deployed via Vercel, with a few serverless API routes.",
+  "dependencies": {
+    "docx": "^9.1.0"
+  }
+}
