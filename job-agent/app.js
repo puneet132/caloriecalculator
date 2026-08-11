@@ -713,7 +713,7 @@ async function openLogDetail(id) {
       <button class="btn btn-ghost" id="btnLogDelete">Delete</button>
     </div>
     <div class="hr"></div>
-    <button class="btn btn-primary" id="btnDraftFollowup">✉️ Draft follow-up email</button>
+    <button class="btn btn-primary" id="btnDraftFollowup"><svg class="icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="10" rx="1.3"/><path d="m3.6 5.8 6.4 5 6.4-5"/></svg> Draft follow-up email</button>
     <div id="followupList">
       ${followUps.map((f, idx) => `
         <div class="followup-item">
