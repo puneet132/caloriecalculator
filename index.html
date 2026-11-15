@@ -7,8 +7,11 @@
 <meta name="description" content="A fourteen-day fat-loss block. One plan, ticked off daily.">
 <meta name="theme-color" content="#141C18">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Fourteen">
+<link rel="icon" href="icons/logo.svg" type="image/svg+xml">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,18 +20,22 @@
 :root{
   --ink:#141C18; --sage:#E7EBE2; --paper:#EEF1E9; --card:#F5F7F1;
   --line:rgba(20,28,24,.10); --line2:rgba(20,28,24,.16);
-  --haldi:#E0A32E; --go:#5C8A47; --clay:#BE5230; --faint:rgba(20,28,24,.52);
+  --haldi:#E0A32E; --haldi-ink:#8A5A0C; --go:#5C8A47; --clay:#BE5230; --faint:rgba(20,28,24,.52);
   --faint-dark:rgba(231,235,226,.55);
   --display:'Bricolage Grotesque',system-ui,sans-serif; --body:'Inter',system-ui,sans-serif;
 }
 *{box-sizing:border-box} html,body{margin:0}
+[hidden]{display:none!important}
 body{background:var(--paper);color:var(--ink);font-family:var(--body);-webkit-font-smoothing:antialiased;overflow-x:hidden}
 :focus-visible{outline:2px solid var(--haldi);outline-offset:2px}
 button{font-family:inherit}
 .wrap{max-width:520px;margin:0 auto;padding:0 16px calc(52px + env(safe-area-inset-bottom));min-height:100svh}
 
 .bar{display:flex;justify-content:space-between;align-items:center;padding:calc(18px + env(safe-area-inset-top)) 2px 16px}
-.mark{font-family:var(--display);font-weight:800;font-size:17px;letter-spacing:-.01em}
+.mark{display:flex;align-items:center;gap:9px;font-family:var(--display);font-weight:800;font-size:17px;letter-spacing:-.01em}
+.mark svg{width:28px;height:28px;flex:0 0 auto}
+.barR{display:flex;align-items:center;gap:8px}
+.netPill{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--clay);border:1px solid rgba(190,82,48,.35);padding:5px 9px;border-radius:20px}
 .mark b{color:var(--haldi)}
 .daypill{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:var(--faint);background:var(--card);border:1px solid var(--line);padding:5px 10px;border-radius:20px}
 
@@ -39,7 +46,7 @@ button{font-family:inherit}
 .lostTag{text-align:right}
 .lostTag b{font-family:var(--display);font-weight:800;font-size:24px;color:var(--haldi);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
 .lostTag span{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint-dark);font-weight:600;margin-top:3px}
-.track{position:relative;height:8px;border-radius:6px;background:rgba(231,235,226,.14);margin:6px 0 9px}
+.track{position:relative;height:8px;border-radius:6px;background:rgba(231,235,226,.14);margin:6px 7px 9px}
 .track .fill{position:absolute;left:0;top:0;bottom:0;border-radius:6px;background:linear-gradient(90deg,var(--go),var(--haldi));transition:width .7s cubic-bezier(.2,.7,.3,1)}
 .track .dot{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:var(--sage);border:3px solid var(--ink);transform:translate(-50%,-50%);transition:left .7s cubic-bezier(.2,.7,.3,1)}
 .ends{display:flex;justify-content:space-between;font-size:11px;color:var(--faint-dark);font-variant-numeric:tabular-nums}
@@ -52,14 +59,14 @@ button{font-family:inherit}
 
 .dialWrap{margin:16px 2px 4px}
 .dialLbl{display:flex;justify-content:space-between;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:600;margin-bottom:8px}
-.dialLbl b{color:var(--go)}
+.dialLbl b{color:#3F6A2E}
 #dial{display:flex;gap:4px}
 #dial i{flex:1;height:7px;border-radius:2px;background:rgba(20,28,24,.11)}
 #dial i.part{background:var(--haldi)} #dial i.full{background:var(--go)}
 #dial i.now{outline:2px solid var(--ink);outline-offset:2px}
 
 .tabs{display:flex;gap:5px;margin:18px 0 14px}
-.tabs button{flex:1;padding:10px 0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;background:var(--card);color:var(--faint);border:1px solid var(--line);border-radius:8px;cursor:pointer}
+.tabs button{flex:1;min-height:44px;padding:10px 0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;background:var(--card);color:var(--faint);border:1px solid var(--line);border-radius:8px;cursor:pointer}
 .tabs button[aria-selected=true]{background:var(--ink);color:var(--sage);border-color:var(--ink)}
 
 .progressLine{display:flex;align-items:center;gap:10px;margin:2px 2px 12px}
@@ -79,7 +86,7 @@ button{font-family:inherit}
 .task .kind{margin-left:auto;flex:0 0 auto;width:7px;height:7px;border-radius:50%;background:var(--line2)}
 .task .kind.move{background:var(--go)} .task .kind.food{background:var(--haldi)} .task .kind.rule{background:var(--clay)}
 
-.editToggle{background:transparent;border:none;color:var(--faint);font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;cursor:pointer;padding:4px 6px}
+.editToggle{background:transparent;border:none;color:rgba(20,28,24,.62);min-height:32px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;cursor:pointer;padding:4px 6px}
 .editToggle.on{color:var(--ink)}
 .taskEdit{display:flex;align-items:center;gap:10px;width:100%;padding:11px 12px;margin-bottom:7px;background:var(--card);border:1px solid var(--line2);border-radius:11px}
 .taskEdit input[type=text]{flex:1;border:none;background:transparent;font-size:14.5px;font-weight:500;color:var(--ink);padding:4px 2px;min-width:0}
@@ -115,11 +122,11 @@ button{font-family:inherit}
 .badge.on{background:rgba(92,138,71,.12);border:1px solid rgba(92,138,71,.34);font-weight:600}
 .badge.off{background:var(--card);border:1px solid var(--line);color:var(--faint)}
 .ex{display:flex;align-items:baseline;gap:13px;padding:13px 4px;border-bottom:1px solid var(--line)}
-.ex u{text-decoration:none;font-family:var(--display);font-size:12px;font-weight:800;color:var(--haldi);width:20px}
+.ex u{text-decoration:none;font-family:var(--display);font-size:12px;font-weight:800;color:var(--haldi-ink);width:20px}
 .ex b{flex:1;font-size:15px;font-weight:500} .ex span{font-size:13px;color:var(--faint)}
 
 .beat{display:grid;grid-template-columns:52px 1fr;gap:14px;padding:14px 0;border-top:1px solid var(--line)}
-.beat time{font-family:var(--display);font-size:13px;font-weight:700;color:var(--haldi)}
+.beat time{font-family:var(--display);font-size:13px;font-weight:700;color:var(--haldi-ink)}
 .beat b{display:block;font-size:14.5px;font-weight:600;margin-bottom:2px}
 .beat span{font-size:12.5px;color:var(--faint);line-height:1.5}
 .sumHead{font-family:var(--display);font-weight:700;font-size:19px;margin:26px 0 4px}
@@ -132,12 +139,22 @@ button{font-family:inherit}
 .warnbox b{display:block;margin-bottom:5px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--clay)}
 
 footer{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);font-size:11px;color:var(--faint)}
+.dataRow{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.dataRow button{background:transparent;border:1px solid var(--line2);border-radius:8px;padding:8px 11px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;color:var(--ink);cursor:pointer}
+.dataRow button.danger{color:var(--clay);border-color:rgba(190,82,48,.35)}
+.toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));transform:translate(-50%,-140%);background:var(--ink);color:var(--sage);padding:10px 16px;border-radius:10px;font-size:13px;z-index:200;transition:transform .3s cubic-bezier(.2,.7,.3,1);max-width:calc(100% - 32px)}
+.toast.on{transform:translate(-50%,0)}
+.blockDone{margin:14px 0 0;padding:14px;border-radius:11px;background:rgba(224,163,46,.14);border:1px solid rgba(224,163,46,.45);font-size:13.5px;line-height:1.5}
+.blockDone button{margin-top:10px;padding:10px 14px;background:var(--ink);color:var(--sage);border:none;border-radius:9px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;cursor:pointer}
+.chartAxis{display:flex;justify-content:space-between;font-size:10.5px;color:var(--faint);margin-top:5px;padding:0 4px}
 #install{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));max-width:488px;margin:0 auto;display:none;padding:13px 16px;background:var(--ink);color:var(--sage);border-radius:12px;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 10px 30px rgba(0,0,0,.3);z-index:50}
-#install p{margin:0;font-size:13px} #install button{padding:10px 16px;background:var(--haldi);color:var(--ink);border:none;border-radius:9px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;cursor:pointer}
+#install p{margin:0;font-size:13px;flex:1}
+#install .x{background:transparent;color:var(--faint-dark);padding:10px 6px;font-size:18px;letter-spacing:0} #install button{padding:10px 16px;background:var(--haldi);color:var(--ink);border:none;border-radius:9px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;cursor:pointer}
 
-.iconBtn{background:var(--card);border:1px solid var(--line);width:34px;height:34px;border-radius:10px;display:grid;place-items:center;cursor:pointer;color:var(--ink);font-size:15px;flex:0 0 auto}
+.iconBtn{background:var(--card);border:1px solid var(--line);height:34px;padding:0 11px;border-radius:10px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;color:var(--ink);font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;flex:0 0 auto}
+.iconBtn svg{width:14px;height:14px}
 .planRow{display:flex;gap:14px;padding:11px 0;border-top:1px solid var(--line);font-size:14px}
-.planRow time{font-family:var(--display);font-size:12.5px;font-weight:700;color:var(--haldi);flex:0 0 56px}
+.planRow time{font-family:var(--display);font-size:12.5px;font-weight:700;color:var(--haldi-ink);flex:0 0 64px}
 
 .modalOverlay{position:fixed;inset:0;background:rgba(20,28,24,.55);display:flex;align-items:flex-end;justify-content:center;z-index:100}
 .modalOverlay[hidden]{display:none}
@@ -159,7 +176,7 @@ footer{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);font-si
 .spin{width:26px;height:26px;border:3px solid var(--line2);border-top-color:var(--ink);border-radius:50%;animation:spin .8s linear infinite;margin:34px auto 14px}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
