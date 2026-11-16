@@ -29,6 +29,11 @@
 - New two-row logo (two weeks of seven days) and matching app icons.
 - Tests for the server function.
 
+### Added later in 1.1.0
+- A **Next** marker on the upcoming timed item, so the list answers "what do I do now?".
+- A **day done** message when everything on the list is ticked.
+- A two-column layout on wide screens: progress on the left, the day's work on the right.
+
 ### Changed
 - "AI plan setup" (⚙) is now a "New plan" button; the wizard no longer names the AI vendor.
 - README rewritten; `START-HERE.md` removed because it described files and code that no longer exist.

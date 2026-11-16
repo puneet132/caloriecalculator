@@ -185,6 +185,22 @@ footer{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);font-si
 .sample button{background:transparent;border:none;font-size:18px;color:var(--faint);cursor:pointer;padding:4px 8px}
 .askMsg{font-size:14px;line-height:1.55;margin:0}
 .wizLabel{cursor:default}
+.task .nextPill{display:inline-block;margin-left:8px;padding:1px 7px;border-radius:20px;background:var(--ink);color:var(--sage);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;vertical-align:1px}
+.task.next{border-color:var(--ink);box-shadow:0 6px 18px -12px rgba(20,28,24,.55)}
+.dayDone{margin:0 0 12px;padding:14px 16px;border-radius:11px;background:var(--ink);color:var(--sage);font-size:14px;line-height:1.5}
+.dayDone b{display:block;font-family:var(--display);font-size:18px;font-weight:800;color:var(--haldi);margin-bottom:2px}
+.task{transition:background .2s,border-color .2s}
+.task .bx{transition:background .2s,border-color .2s,transform .2s}
+.task[aria-pressed=true] .bx{transform:scale(1.06)}
+@media (min-width:960px){
+  .wrap{max-width:1040px;padding-left:32px;padding-right:32px}
+  main{display:grid;grid-template-columns:minmax(0,400px) minmax(0,1fr);gap:40px;align-items:start}
+  .colA{position:sticky;top:20px}
+  .colB .tabs{margin-top:0}
+  .big{font-size:64px}
+  .modalOverlay{align-items:center}
+  .modal{border-radius:18px;max-width:560px}
+}
 body:has(#install:not([hidden])) .wrap{padding-bottom:calc(128px + env(safe-area-inset-bottom))}
 </style>
 </head>
@@ -203,6 +219,7 @@ body:has(#install:not([hidden])) .wrap{padding-bottom:calc(128px + env(safe-area
   </header>
 
   <main>
+  <div class="colA">
   <div class="hero">
     <div class="heroTop">
       <div class="big" id="hNow">85.0<small>kg</small></div>
@@ -224,6 +241,9 @@ body:has(#install:not([hidden])) .wrap{padding-bottom:calc(128px + env(safe-area
     <div class="dialLbl"><span id="blockLbl">14-day block</span><b id="streakTxt">0-day streak</b></div>
     <div id="dial" role="img"></div>
   </div>
+  </div>
+
+  <div class="colB">
 
   <div class="tabs" role="tablist" aria-label="Sections">
     <button role="tab" id="tabToday" aria-controls="panelToday" aria-selected="true" data-tab="Today">Today</button>
@@ -234,6 +254,7 @@ body:has(#install:not([hidden])) .wrap{padding-bottom:calc(128px + env(safe-area
 
   <section id="panelToday" role="tabpanel" aria-labelledby="tabToday">
     <div class="progressLine"><span class="pn" id="pnNum">0%</span><span class="pt"><i id="pnBar" style="width:0%"></i></span><span class="pc" id="pnCount">0 of 10 done</span><button class="editToggle" id="editToggle" type="button">Edit list</button></div>
+    <div class="dayDone" id="dayDone" hidden></div>
     <div id="taskList"></div>
     <div id="addRow" class="addRow" hidden>
       <input id="addLbl" type="text" maxlength="120" aria-label="New checklist item" placeholder="New item — e.g. Take multivitamin">
@@ -277,6 +298,7 @@ body:has(#install:not([hidden])) .wrap{padding-bottom:calc(128px + env(safe-area
   <section id="panelPlan" role="tabpanel" aria-labelledby="tabPlan" hidden>
     <div id="planContent"></div>
   </section>
+  </div>
   </main>
 
   <footer>
@@ -590,19 +612,36 @@ function renderToday(){
         <button type="button" class="rm" data-remove="${esc(t.id)}" aria-label="Remove ${esc(t.lbl)}">−</button>
       </div>`).join("")||`<p class="note">Your list is empty. Add an item below.</p>`;
   }else{
+    const nextId=nextUp(list,set);
     $("taskList").innerHTML=list.map(t=>`
-      <button type="button" class="task" aria-pressed="${set.has(t.id)}" data-id="${esc(t.id)}">
+      <button type="button" class="task${t.id===nextId?" next":""}" aria-pressed="${set.has(t.id)}" data-id="${esc(t.id)}">
         <span class="bx" aria-hidden="true">✓</span>
-        <span style="flex:1;min-width:0"><span class="lbl">${esc(t.lbl)}</span><span class="tm">${esc(t.tm)}</span></span>
+        <span style="flex:1;min-width:0"><span class="lbl">${esc(t.lbl)}</span><span class="tm">${esc(t.tm)}${t.id===nextId?'<span class="nextPill">Next</span>':""}</span></span>
         <span class="kind ${t.k}" aria-hidden="true"></span><span class="sr">${t.k==="move"?"movement":t.k==="food"?"food":"rule"}</span>
       </button>`).join("")||`<p class="note">Nothing on today's list. Tap “Edit list” to add items.</p>`;
   }
   $("addRow").hidden=!editMode;
   const doneN=set.size,tot=list.length,pct=tot?Math.round(doneN/tot*100):0;
+  const dd=$("dayDone");
+  dd.hidden=!(tot>0&&doneN===tot&&!editMode);
+  if(!dd.hidden)dd.innerHTML=`<b>Day ${Math.min(dayNum,S.blockDays)} done.</b>Everything on today's list is ticked. ${dayNum<S.blockDays?"See you tomorrow.":"That was the last day of this block."}`;
   $("pnNum").textContent=pct+"%";$("pnBar").style.width=pct+"%";$("pnCount").textContent=doneN+" of "+tot+" done";
   renderHabits();renderDial();renderStreak();
 }
 
+// The next thing to do: the first unticked item with a clock time that is
+// still ahead (or within the last 30 minutes). Items like "all day" never qualify.
+function nextUp(list,done){
+  const now=new Date(),mins=now.getHours()*60+now.getMinutes();
+  let best=null,bestT=Infinity;
+  for(const t of list){
+    if(done.has(t.id))continue;
+    const m=/^(\d{1,2}):(\d{2})$/.exec(t.tm);if(!m)continue;
+    const at=+m[1]*60+ +m[2];
+    if(at>=mins-30&&at<bestT){best=t.id;bestT=at}
+  }
+  return best;
+}
 function drinksThisWeek(){
   let n=0;
   for(let i=0;i<7;i++){const d=pd(D);d.setDate(d.getDate()-i);const r=S.days[iso(d)];if(r)n+=r.drinks||0}
