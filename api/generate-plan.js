@@ -29,9 +29,9 @@ const geminiUrl = (model) =>
 // the model was dead. 429/5xx are capacity and clear in seconds.
 const ADVANCE = new Set([404, 429, 500, 502, 503, 504]);
 
-// A malformed request or a bad key fails identically on every model, so those
-// abort immediately rather than burning five more calls to learn the same thing.
-const TRANSIENT = ADVANCE;
+const REQUEST_TIMEOUT_MS = 20000;
+const TOTAL_BUDGET_MS = 50000;
+const RETRY_PAUSE_MS = [400, 2000];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -122,10 +122,12 @@ Return only the plan, matching the response schema exactly.`;
 }
 
 async function requestPlan(model, apiKey, payload) {
-  const r = await fetch(`${geminiUrl(model)}?key=${apiKey}`, {
+  // The key goes in a header, not the URL, so it never lands in request logs.
+  const r = await fetch(geminiUrl(model), {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
   });
   if (!r.ok) {
     const errText = await r.text().catch(() => "");
@@ -139,55 +141,104 @@ async function requestPlan(model, apiKey, payload) {
 
 // Walk the models on capacity errors, then walk them once more after a pause.
 // A bad key or a malformed request fails identically on every model, so only
-// transient statuses are worth retrying — anything else throws immediately
-// rather than burning five more calls to reach the same answer.
+// the statuses in ADVANCE (and timeouts) move on; anything else throws at once.
+// The whole thing stops before Vercel's 60-second function limit.
 async function generateWithFallback(apiKey, payload) {
+  const deadline = Date.now() + TOTAL_BUDGET_MS;
   let lastErr = null;
   for (let pass = 0; pass < 2; pass++) {
     for (const model of MODELS) {
+      if (Date.now() > deadline) throw lastErr || new Error("Timed out");
       try {
         return { data: await requestPlan(model, apiKey, payload), model };
       } catch (err) {
+        const timedOut = err && (err.name === "TimeoutError" || err.name === "AbortError");
+        if (timedOut) err.status = 504;
         lastErr = err;
         if (!ADVANCE.has(err.status)) throw err;
-        await sleep(pass === 0 ? 400 : 2000);
+        await sleep(pass === 0 ? RETRY_PAUSE_MS[0] : RETRY_PAUSE_MS[1]);
       }
     }
   }
   throw lastErr;
 }
 
-module.exports = async (req, res) => {
+// ---- input checking ----
+const DIETS = ["vegetarian", "eggetarian", "non-vegetarian"];
+const GOALS = ["fat loss", "muscle gain", "recomp (fat loss + muscle)", "general fitness"];
+const ACTIVITY = ["sedentary", "light", "moderate", "active"];
+
+// Returns { value } with a cleaned profile, or { error } with a message for the user.
+// Free text is length-limited and stripped of line breaks before it goes into the prompt.
+function parseProfile(body) {
+  let a = body;
+  if (typeof a === "string") {
+    try { a = JSON.parse(a); } catch { a = null; }
+  }
+  if (!a || typeof a !== "object") return { error: "Send the profile as JSON." };
+  const num = (v) => (typeof v === "number" || (typeof v === "string" && v.trim() !== "") ? Number(v) : NaN);
+  const currentWeight = num(a.currentWeight), goalWeight = num(a.goalWeight), days = Math.round(num(a.days));
+  if (!(currentWeight >= 30 && currentWeight <= 250)) return { error: "Current weight must be between 30 and 250 kg." };
+  if (!(goalWeight >= 30 && goalWeight <= 250)) return { error: "Goal weight must be between 30 and 250 kg." };
+  if (!(days >= 3 && days <= 90)) return { error: "Days must be between 3 and 90." };
+  if (!DIETS.includes(a.dietPref)) return { error: "Choose a diet." };
+  if (!GOALS.includes(a.goalType)) return { error: "Choose a goal type." };
+  if (!ACTIVITY.includes(a.activityLevel)) return { error: "Choose an activity level." };
+  const count = (v, max) => Math.min(max, Math.max(0, Math.round(num(v)) || 0));
+  const dislikes = typeof a.dislikes === "string" ? a.dislikes.replace(/[\r\n\t]+/g, " ").replace(/[<>{}`]/g, "").trim().slice(0, 200) : "";
+  return {
+    value: {
+      currentWeight, goalWeight, days,
+      dietPref: a.dietPref, goalType: a.goalType, activityLevel: a.activityLevel,
+      smokingEnabled: a.smokingEnabled === true, smokingCurrent: count(a.smokingCurrent, 100),
+      drinkingEnabled: a.drinkingEnabled === true, drinkingCurrent: count(a.drinkingCurrent, 200),
+      dislikes
+    }
+  };
+}
+
+// ---- rate limit ----
+// Best effort only: this memory is per server instance and is lost when the
+// instance restarts, so it slows down casual abuse of the API key but is not a
+// guarantee. A shared store (e.g. Vercel KV / Upstash) would be needed for that.
+const RATE_LIMIT = 6, RATE_WINDOW_MS = 10 * 60 * 1000;
+const hits = new Map();
+function rateLimited(ip, now = Date.now()) {
+  const recent = (hits.get(ip) || []).filter((t) => now - t < RATE_WINDOW_MS);
+  if (recent.length >= RATE_LIMIT) { hits.set(ip, recent); return true; }
+  recent.push(now); hits.set(ip, recent);
+  if (hits.size > 5000) for (const [k, v] of hits) if (!v.some((t) => now - t < RATE_WINDOW_MS)) hits.delete(k);
+  return false;
+}
+
+async function handler(req, res) {
   if (req.method !== "POST") {
+    res.setHeader("Allow", "POST");
     res.status(405).json({ error: "Method not allowed" });
     return;
   }
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    res.status(500).json({ error: "Server is missing GEMINI_API_KEY" });
+    console.error("generate-plan: GEMINI_API_KEY is not set");
+    res.status(500).json({ error: "Plan building isn't set up on this site yet." });
     return;
   }
 
-  const a = req.body || {};
-  const required = ["currentWeight", "goalWeight", "days", "dietPref", "goalType", "activityLevel"];
-  for (const f of required) {
-    if (a[f] === undefined || a[f] === null || a[f] === "") {
-      res.status(400).json({ error: `Missing field: ${f}` });
-      return;
-    }
-  }
-  if (!(a.currentWeight > 30 && a.currentWeight < 250) || !(a.goalWeight > 30 && a.goalWeight < 250)) {
-    res.status(400).json({ error: "Weight out of range" });
+  const parsed = parseProfile(req.body);
+  if (parsed.error) {
+    res.status(400).json({ error: parsed.error });
     return;
   }
-  if (!(a.days >= 3 && a.days <= 90)) {
-    res.status(400).json({ error: "Days must be between 3 and 90" });
+
+  const ip = String((req.headers && req.headers["x-forwarded-for"]) || "unknown").split(",")[0].trim();
+  if (rateLimited(ip)) {
+    res.status(429).json({ error: "That's a lot of plans in a short time. Try again in a few minutes." });
     return;
   }
 
   const payload = {
-    contents: [{ parts: [{ text: buildPrompt(a) }] }],
+    contents: [{ parts: [{ text: buildPrompt(parsed.value) }] }],
     generationConfig: {
       responseMimeType: "application/json",
       responseSchema: RESPONSE_SCHEMA,
@@ -195,36 +246,43 @@ module.exports = async (req, res) => {
     }
   };
 
+  let data;
   try {
-    let data;
-    try {
-      ({ data } = await generateWithFallback(apiKey, payload));
-    } catch (err) {
-      res.status(502).json({
-        error: ADVANCE.has(err.status)
-          ? "Every model was busy just now. This is Google's capacity, not your plan — try again in a minute."
-          : `Gemini request failed (${err.status || "no response"})`,
-        detail: err.detail || String(err.message || err)
-      });
-      return;
-    }
-
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) {
-      res.status(502).json({ error: "Gemini returned no content" });
-      return;
-    }
-
-    let plan;
-    try {
-      plan = JSON.parse(text);
-    } catch {
-      res.status(502).json({ error: "Gemini returned malformed JSON" });
-      return;
-    }
-
-    res.status(200).json({ plan });
+    ({ data } = await generateWithFallback(apiKey, payload));
   } catch (err) {
-    res.status(500).json({ error: "Plan generation failed", detail: String(err && err.message || err) });
+    // Upstream detail goes to the server log, not to the browser.
+    console.error("generate-plan: upstream failure", err && err.status, err && (err.detail || err.message));
+    res.status(502).json({
+      error: ADVANCE.has(err && err.status)
+        ? "The AI service is busy right now. Your answers are fine — try again in a minute."
+        : "The AI service rejected the request. Try again later."
+    });
+    return;
   }
-};
+
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) {
+    res.status(502).json({ error: "The AI service returned an empty plan. Try again." });
+    return;
+  }
+
+  let plan;
+  try {
+    plan = JSON.parse(text);
+  } catch {
+    res.status(502).json({ error: "The AI service returned an unreadable plan. Try again." });
+    return;
+  }
+  if (!plan || !Array.isArray(plan.mealRotation) || plan.mealRotation.length !== 7 || !Array.isArray(plan.dailyTasks)) {
+    res.status(502).json({ error: "The plan came back incomplete. Try again." });
+    return;
+  }
+
+  res.status(200).json({ plan });
+}
+
+module.exports = handler;
+// Exposed for tests.
+module.exports.parseProfile = parseProfile;
+module.exports.rateLimited = rateLimited;
+module.exports.RETRY_PAUSE_MS = RETRY_PAUSE_MS;
