@@ -6,7 +6,7 @@ You get one plan (meals, a short bodyweight circuit, daily habits), tick it off 
 
 | | |
 |---|---|
-| **Live app** | Deployed on Vercel from the `main` branch |
+| **Live app** | https://caloriecalculator-delta.vercel.app (deployed by Vercel from the `master` branch) |
 | **Stack** | One HTML file (no framework, no build step) · one Vercel serverless function · service worker |
 | **Data** | Browser `localStorage` on the device. No account, no database. |
 | **AI** | Google Gemini, called only from the server function, only when you build a new plan |
@@ -53,7 +53,7 @@ npm test
 
 ## Deploy
 
-The repository is connected to Vercel; every push to `main` deploys. For a fresh setup:
+The repository is connected to Vercel; every push to `master` deploys. For a fresh setup:
 
 1. On vercel.com choose **Add New → Project** and import this repository.
 2. Framework preset **Other**. Leave the build command and output directory empty.
